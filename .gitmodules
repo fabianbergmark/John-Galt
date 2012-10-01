@@ -1,0 +1,6 @@
+[submodule "Plugins/jquery"]
+	path = Plugins/jquery
+	url = git@github.com:fabianbergmark/jquery.git
+[submodule "Plugins/bootstrap"]
+	path = Plugins/bootstrap
+	url = git@github.com:fabianbergmark/bootstrap.git
