@@ -18,7 +18,13 @@ exports.list = function(req, res) {
         if(id !== undefined) {
           id = id.split(/&/)[0];
           room.id = id;
-          room.status = 2;
+          var color = $(this).css("background-color");
+          if(color == "#ff6666")
+            room.status = 2;
+          else if(color == "#FFF380")
+            room.status = 1;
+          else
+            return;
         }
         else {
           room.status = 0;

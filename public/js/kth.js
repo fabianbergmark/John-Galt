@@ -119,8 +119,17 @@ $(function() {
                 $("#rooms").append(row);
               }
             }
-            else if(value.status == 1)
+            else if(value.status == 1) {
               status.unconfirmed += 0;
+              var row = $("<tr><td>"
+                         + value.day
+                         + " - "
+                         + value.time
+                         + " @"
+                         + value.bokid
+                         + "</td></tr>");
+              $("#yellow").append(row);
+            }
             else if(value.status == 2)
               status.booked += 1;
           });
