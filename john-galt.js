@@ -5,10 +5,19 @@
 
 var express = require('express')
   , routes  = require('./routes')
-  , user    = require('./routes/user')
+  , rooms   = require('./routes/rooms')
   , http    = require('http')
   , path    = require('path')
   , $       = require('jquery');
+
+exports.fetch = function(cps) {
+  $(function() {
+    $.get( "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp"
+       , function(data) {
+           cps(data);
+         });
+  });
+};
 
 var app = express();
 
@@ -30,7 +39,7 @@ app.configure('development', function(){
 });
 
 app.get('/', routes.index);
-app.get('/users', user.list);
+app.get('/rooms', rooms.list);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
