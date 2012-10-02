@@ -1,8 +1,8 @@
 var $ = require('jquery');
 
-exports.fetch = function(cps) {
+exports.fetch = function(url, cps) {
   $(function() {
-    $.get( "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp"
+    $.get( url
        , function(data) {
            cps(data);
          });

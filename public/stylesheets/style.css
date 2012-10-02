@@ -5,3 +5,12 @@ body {
 a {
   color: #00b7ff;
 }
+#console {
+  background-color: #002b36;
+  font-weight: bold;
+  color: #cb4b16;
+  min-height: 300px;
+}
+#rooms {
+  background-color: #008000;
+}
