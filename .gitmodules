@@ -4,3 +4,6 @@
 [submodule "Plugins/bootstrap"]
 	path = Plugins/bootstrap
 	url = git@github.com:fabianbergmark/bootstrap.git
+[submodule "Plugins/Source-Code-Pro"]
+	path = Plugins/Source-Code-Pro
+	url = git@github.com:fabianbergmark/Source-Code-Pro.git
