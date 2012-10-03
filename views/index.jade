@@ -1,33 +1,42 @@
 extends layout
 
 block content
-  div.row-fluid
-    div.span10.offset1
-      h1 John Galt
-  br
-  div.row-fluid
-    div.span1
-      div.row
+  div.container
+    div.page-header
+      center
+        h1 John Galt
+    br
+    br
+    div.row
+      div.span3
         button#start.btn.btn-large.btn-block.btn-success Start
-      br
-      div.row
+      div.span3
         button#hunt.btn.btn-large.btn-block.btn-danger Hunt
-    div.span10
-      div#console.well
-    div.span1
-      table#status.table
-        thead
-          th Status
-  div.row-fluid
-    div.span2.offset1
-      table#cards.table.table-hover.table-condensed
-        thead
-          th Cards
-    div.span3.offset1
-      table#rooms.table.table-hover.table-condensed
-        thead
-          th Rooms
-    div.span3.offset1
-      table#yellow.table.table-hover.table-condensed
-        thead
-          th Unconfirmed
+    br
+    div.row
+      div.span12
+        div#console.well
+          div.row-fluid
+            div.span10
+              div#text
+            div.span2
+              table#status.table
+                thead
+                  th Status
+    div.row
+      div.span2
+        table#cards.table.table-hover.table-condensed
+          thead
+            th Cards
+      div.span3
+        table#rooms.table.table-hover.table-condensed
+          thead
+            th Rooms
+      div.span3
+        table#yellow.table.table-hover.table-condensed
+          thead
+            th Unconfirmed
+      div.span3
+        table#booked.table.table-hover-table-condensed
+          thead
+            th Booked
