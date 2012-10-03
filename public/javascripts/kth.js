@@ -1,8 +1,31 @@
 $(function() {
-
+  var lines = [];
+  var offset = 0;
   function shell(line) {
-    $("#console").append('<p>John Galt:~ $ ' + line + '</p>');
+    lines.push(line);
+    console.log(offset);
+    if(offset == 0) {
+      if(lines.length > 11) {
+        $("#console #text").children().first().remove();
+      }
+      $("#console #text").append('<p>John Galt:~ $ ' + line + '</p>');
+    }
   }
+  $(document).keydown(function(event) {
+    var key = event.which;
+    switch(key) {
+      case 40:
+        if(offset > 0)
+          offset--;
+          break;
+      case 38:
+          offset++;
+      case 37:
+        break;
+      case 39:
+        break;
+    }
+  });
   
   function status() {
     var s = $("<tr><td></td></tr>");
@@ -160,6 +183,8 @@ $(function() {
             }
           var t = [];
           var append = 0;
+          $("#rooms > tbody").empty();
+          $("#yellow > tbody").empty();
           $(data.rooms).each(function(index,value) {
             if(value.status == 0) {
               status.available += 1;
@@ -167,9 +192,9 @@ $(function() {
                 append++;
                 var row = $("<tr></tr>");
                 var room  = $("<td>"
-                            + value.day
+                            + value.day.substr(5,5)
                             + " - "
-                            + value.time
+                            + value.time.substr(0,5)
                             + " @"
                             + value.bokid
                             + "</td>");
@@ -217,10 +242,9 @@ $(function() {
             t.push(value);
           });
           rooms = t;
-          shell("Status: ↴<br />"
-               +nbsp(16)+"available (" + status.available     + ")<br />"
-               +nbsp(16)+"unconfirmed (" + status.unconfirmed + ")<br />"
-               +nbsp(16)+"booked (" + status.booked      + ")");
+          shell("Status:  available (" + status.available     + ")"
+                      +", unconfirmed (" + status.unconfirmed + ")"
+                      +", booked (" + status.booked           + ")");
         }
       , "error"    : function(request, error, code) {
           console.log(error);
