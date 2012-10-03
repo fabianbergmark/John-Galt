@@ -12,6 +12,12 @@ exports.list = function(req, res) {
         , { "owner"  : "August Bonds"
           , "number" : "0111311117"
           }
+        , { "owner"  : "Marcus Skagenberg"
+          , "number" : "011126082x"
+          }
+        , { "owner"  : "Johan Stenberg"
+          , "number" : "0111410555"
+          }
         ]
     }
   res.end(JSON.stringify(cards));

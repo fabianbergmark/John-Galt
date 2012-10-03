@@ -7,6 +7,37 @@ var $     = require('jquery');
 var fetch = require('../fetch.js');
 
 exports.list = function(req, res) {
+  function mapRoom(name) {
+    switch(name) {
+      case "1.%20Leibnitz":
+        return "Grp01";
+      case "2.%20Pascal":
+        return "Grp02";
+      case "3.%20Scheele":
+        return "Grp03";
+      case "4.%20Leopold":
+        return "Grp04";
+      case "5.%20Agricola":
+        return "Grp05";
+      case "6.%20Bernoulli":
+        return "Grp06";
+      case "7.%20D%C3%BCrer":
+        return "Grp07";
+      case "8.%20Galvani":
+        return "Grp08";
+      case "9.%20Mikroskopet":
+        return "Grp09";
+      case "10.%20Teleskopet":
+        return "Grp10";
+      case "11.%20Watt":
+        return "Grp11";
+      case "12.%20Santorio":
+        return "Grp12";
+      case "13.%20N%20Galleriet":
+        return "Grp13";
+    }
+  }
+  
   function parseRooms(data) {
     var rooms = [];
     $(data).find("td").each(function() {
@@ -25,6 +56,11 @@ exports.list = function(req, res) {
             room.status = 1;
           else
             return;
+          var obj = href.split(/obj=/)[1];
+          if(obj !== undefined) {
+            obj = obj.split(/&/)[0];
+            room.bokid = mapRoom(obj);
+          }
         }
         else {
           room.status = 0;

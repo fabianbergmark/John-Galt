@@ -12,3 +12,7 @@ a {
   min-height: 300px;
   font: 14px "Source-Code-Pro";
 }
+.check:hover {
+  color: #008000;
+  cursor: pointer;
+}
