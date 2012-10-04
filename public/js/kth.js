@@ -3,7 +3,6 @@ $(function() {
   var offset = 0;
   function shell(line) {
     lines.push(line);
-    console.log(offset);
     if(offset == 0) {
       if(lines.length > 11) {
         $("#console #text").children().first().remove();
@@ -74,7 +73,6 @@ $(function() {
                     , "anv"     : "John Galt"
                     }
       , "success" : function(data) {
-          console.log(data);
         }
       , "error": function(request,error,code) {
           console.log(error);
@@ -95,7 +93,6 @@ $(function() {
                     , "s"       : "av"
                     }
       , "success" : function(data) {
-          console.log(data);
         }
       , "error": function(request,error,code) {
           console.log(error);
@@ -176,6 +173,15 @@ $(function() {
       , "dataType" : "json"
       , "url"      : "/rooms"
       , "success"  : function(data) {
+          data.rooms.sort(function(c1, c2) {
+            var d1 = new Date(c1.day + " " + c1.time);
+            var d2 = new Date(c2.day + " " + c2.time);
+            var diff = d1.getTime() - d2.getTime();
+            if(diff == 0) {
+              return c2.bokid > c1.bokid; 
+            }
+            return diff;
+          });
           var status =
             { "booked"      : 0
             , "unconfirmed" : 0

@@ -18,6 +18,9 @@ exports.list = function(req, res) {
         , { "owner"  : "Johan Stenberg"
           , "number" : "0111410555"
           }
+        , { "owner"  : "Arvid"
+          , "number" : "0111410564"
+          }
         ]
     }
   res.end(JSON.stringify(cards));
