@@ -4,7 +4,6 @@
  */
 
 var $     = require('jquery');
-var fetch = require('../fetch.js');
 
 exports.list = function(req, res) {
   function mapRoom(name) {
@@ -109,7 +108,9 @@ exports.list = function(req, res) {
       }
       var url = "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp?bokdag="
               + date.toISOString().substr(0,10);
-      fetch.fetch(url, cps);
+      $.get( url, function(data) {
+          cps(data);
+        });
     }
   }
   
