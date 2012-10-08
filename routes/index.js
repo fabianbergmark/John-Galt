@@ -4,5 +4,8 @@
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'John Galt' });
+  if (!req.session.user_id)
+    res.redirect('/auth');
+  else
+    res.render('index', { title: 'John Galt' });
 };
