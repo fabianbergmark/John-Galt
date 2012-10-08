@@ -11,7 +11,7 @@ block content
       div.span3
         button#start.btn.btn-large.btn-block.btn-success Start
       div.span3
-        button#hunt.btn.btn-large.btn-block.btn-danger Hunt
+        button#stop.btn.btn-large.btn-block.btn-danger Stop
     br
     div.row
       div.span12
@@ -19,6 +19,11 @@ block content
           div.row-fluid
             div.span10
               div#text
+              div.row-fluid#commandline
+                div.span12
+                  div.input-prepend
+                    span.add-on $>
+                    input(type='text')#line
             div.span2
               table#status.table
                 thead

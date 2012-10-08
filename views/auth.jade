@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  div.container
+    div.page-header
+        h1 Who am I
+    br
+    br
+    form(action='/auth/login', method='POST').form-horizontal
+      div.control-group
+        input(type='text', id='name', name='user', placeholder="User")
+      div.control-group
+        input(type='password', id='pass', name='pass', placeholder="Password")
+      input(type='submit', value='Login').btn.btn-primary

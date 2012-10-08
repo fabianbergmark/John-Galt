@@ -2,10 +2,11 @@
 /*
  * GET registered cards.
  */
-
+ 
 exports.list = function(req, res) {
   cards =
-    { "cards":
+    { "status": true
+    , "cards":
         [ { "owner"  : "Fabian Bergmark"
           , "number" : "0111352283"
           }
@@ -18,10 +19,10 @@ exports.list = function(req, res) {
         , { "owner"  : "Johan Stenberg"
           , "number" : "0111410555"
           }
-        , { "owner"  : "Arvid"
+        , { "owner"  : "Carl-Arvid Ewerbring"
           , "number" : "0111410564"
           }
         ]
     }
-  res.end(JSON.stringify(cards));
+  res.send(cards);
 };
