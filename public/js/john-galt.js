@@ -47,6 +47,14 @@ function loadCards(continuation) {
   );
 }
 
+function updateRoom(room) {
+  var update = function(r) {
+    room = r;
+    shell("Updated " + room.bokid + " @" + room.day + " #" + room.time);
+  }
+  loadRoom(room, update);
+}
+
 function Barrier() {
   this.active = true;
 }
@@ -103,9 +111,13 @@ $(function() {
   var continuation = function(cards) {
     $(cards).each(function(index, card) {
       var on = function() {
+        cards.push(card);
         shell("Registered card [" + card.number + "] (" + card.owner + ")");
       }
       var off = function() {
+        $(cards).grep(function(c) {
+          card !== c;
+        });
         shell("Unregistered card [" + card.number + "] (" + card.owner + ")");
       }
       addCard(card, on, off);
@@ -148,14 +160,10 @@ $(function() {
         if(room.status == 0) {
           var off = function() {
             book(room, state.cards[0], function() {
-                shell("Booking " + room.bokid + ' @' + room.day + " #" + room.time);
+                shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
+                updateRoom(room);
               }
             );
-            var update = function(r) {
-              room = r;
-              shell("Updated " + room.bokid + ' @' + room.day + " #" + room.time);
-            }
-            loadRoom(room, update);
           }
           var on = function() {
             if(!room.hasOwnProperty("id")) {
@@ -163,6 +171,7 @@ $(function() {
                 room = r;
                 unbook(room, state.cards[0], function() {
                     shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+                    updateRoom(room);
                   }
                 );
               }
@@ -171,6 +180,7 @@ $(function() {
             else
               unbook(room, state.cards[0], function() {
                   shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+                  updateRoom(room);
                 }
               );
           }
@@ -185,10 +195,22 @@ $(function() {
         }
         else if(room.status == 2) {
           var on = function() {
-            
+            if(room.owner == "John Galt") {
+              book(room, state.cards[0], function() {
+                  shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
+                  updateRoom(room);
+                }
+              );
+            }
           }
           var off = function() {
-            
+            if(room.owner == "John Galt") {
+              unbook(room, state.cards[0], function() {
+                  shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+                  updateRoom(room);
+                }
+              );
+            }
           }
         }
         addRoom(room, on, off);

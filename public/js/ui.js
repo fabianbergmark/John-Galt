@@ -22,6 +22,9 @@ function addRoom(room, on, off) {
       return addAvailableRoom(room, on, off);
     case 1:
       return addUnconfirmedRoom(room, on, off);
+    case 2:
+      if(room.owner === "John Galt")
+        return addBookedRoom(room, on, off);
   }
 }
 
@@ -53,6 +56,21 @@ function addUnconfirmedRoom(room, on, off) {
   var c = check(on, off);
   row.append(room).append(c);
   $("#yellow").append(row);
+  return row;
+}
+
+function addBookedRoom(room, on, off) {
+  var row =  $("<tr></tr>");
+  var room = $("<td>"
+              + room.day
+              + " - "
+              + room.time
+              + " @"
+              + room.bokid
+              + "</td>");
+  var c = check(on, off);
+  row.append(room).append(c);
+  $("#booked").append(row);
   return row;
 }
 
