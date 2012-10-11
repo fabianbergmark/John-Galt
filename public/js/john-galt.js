@@ -55,17 +55,6 @@ function updateRoom(room) {
   loadRoom(room, update);
 }
 
-function Barrier() {
-  this.active = true;
-}
-
-Barrier.prototype.stop = function() {
-  this.active = false;
-}
-Barrier.prototype.isActive = function() {
-  return this.active;
-}
-
 function attack(findTargets, getCards) {
   function load(previous) {
     var update = function(rooms) {

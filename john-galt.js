@@ -10,6 +10,7 @@ var express = require('express')
   , room    = require('./routes/room')
   , rooms   = require('./routes/rooms')
   , cards   = require('./routes/cards')
+  , measure = require('./routes/measure')
   , http    = require('http')
   , path    = require('path')
   , nib     = require('nib')
@@ -57,6 +58,7 @@ app.get('/', routes.index);
 app.get('/cards', authenticate, cards.list);
 app.get('/rooms', authenticate, rooms.list);
 app.get('/room/:day/:time/:bokid', authenticate, room.get);
+app.get('/measure/start', authenticate, measure.start);
 app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);
