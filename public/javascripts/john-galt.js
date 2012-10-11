@@ -59,13 +59,26 @@ function attack(findTargets, getCards) {
   function load(previous) {
     var update = function(rooms) {
       previous.stop();
-      var cards   = getCards();
       var targets = findTargets(rooms);
-      if(targets.length > 0 && cards.length > 0) {
+      if(targets.length > 0 && getCards().length > 0) {
         var target  = targets[0];
+        shell("Attacking target " + target.bokid + ' @' + target.day + " #" + target.time);
         var barrier = new Barrier();
-        setTimeout(function() { loop(target, barrier) }, 1);
-        setTimeout(function() { load(barrier) }, 1);
+        var i = 0;
+        var counter = status();
+        setTimeout(function() {
+            loop(target, barrier, function() {
+                counter.html("<p>" + i++ + "</p>");
+              }
+            );
+          }
+          , 1
+        );
+        setTimeout(function() {
+            //load(barrier)
+          }
+          , 1
+        );
       }
       else {
         shell("Stopping attack");
@@ -73,17 +86,27 @@ function attack(findTargets, getCards) {
     }
     loadRooms(update);
   }
-  function loop(target, barrier) {
+  function loop(target, barrier, callback) {
+    var cards = getCards();
+    var semaphore = new Semaphore(function() {
+        setTimeout(function() { loop(target, barrier, callback); }, 100);
+      }
+    );
     if(barrier.isActive()) {
+      semaphore.increment();
       $(cards).each(function(i, card) {
         if(barrier.isActive()) {
-          book(target, card, function() {});
+          semaphore.increment();
+          book(target, card, function() {
+              semaphore.decrement();
+            }
+          );
+          callback();
         }
         else
           return false;
       });
-      shell("booking " + target.bokid + ' @' + target.day + " #" + target.time);
-      setTimeout(function() { loop(target, barrier); }, 10);
+      semaphore.decrement();
     }
     else
       shell("Breaking loop");
@@ -104,7 +127,7 @@ $(function() {
         shell("Registered card [" + card.number + "] (" + card.owner + ")");
       }
       var off = function() {
-        $(cards).grep(function(c) {
+        cards = $.grep(cards, function(c) {
           card !== c;
         });
         shell("Unregistered card [" + card.number + "] (" + card.owner + ")");
