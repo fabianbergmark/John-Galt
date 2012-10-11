@@ -3,10 +3,11 @@
  * Run measurements against KTH.
  */
 
-var $       = require('jquery');
-var mysql   = require('mysql');
-var parser  = require('./parser.js');
-var Barrier = require('./barrier.js');
+var $        = require('jquery');
+var mysql    = require('mysql');
+var parser   = require('./parser.js');
+var Barrier  = require('./barrier.js');
+var settings = require('../settings.js');
 
 var client = mysql.createClient(
   { "host"    : "192.168.7.104"
@@ -18,39 +19,35 @@ exports.connect = function(req, res) {
 }
 
 var timetable =
-  [ { "from": new Date("08:00")
-    , "to"  : new Date("10:00") }
-  , { "from": new Date("10:00")
-    , "to"  : new Date("12:00") }
-  , { "from": new Date("12:00")
-    , "to"  : new Date("13:00") }
-  , { "from": new Date("13:00")
-    , "to"  : new Date("15:00") }
-  , { "from": new Date("15:00")
-    , "to"  : new Date("17:00") }
-  , { "from": new Date("17:00")
-    , "to"  : new Date("20:00") } ];
+  [ { "from": 8  * 60 * 60 * 1000
+    , "to"  : 10 * 60 * 60 * 1000 }
+  , { "from": 10 * 60 * 60 * 1000
+    , "to"  : 12 * 60 * 60 * 1000 }
+  , { "from": 12 * 60 * 60 * 1000
+    , "to"  : 13 * 60 * 60 * 1000 }
+  , { "from": 13 * 60 * 60 * 1000
+    , "to"  : 15 * 60 * 60 * 1000 }
+  , { "from": 15 * 60 * 60 * 1000
+    , "to"  : 17 * 60 * 60 * 1000 }
+  , { "from": 17 * 60 * 60 * 1000
+    , "to"  : 20 * 60 * 60 * 1000 } ];
 
-function sleep(time, continuation) {
-  var span = new Date("00:10");
+function idle(approximization, time, continuation) {
   $(timetable).each(function(index, range) {
-    if(time.getTime() - range.from.getTime()  < span.getTime()) {
-      var duration = time.getTime() - range.from.getTime();
-      var zoom     = Math.min(1, duration / (2 * 60 * 1000));
-      console.log("Sleeping for " + duration * zoom / (60 * 1000) + " seconds.");
-      setTimeout(continuation, duration * zoom);
+    if(time - range.from  < approximization) {
+      var duration = Math.max(0, range.from - time);
+      console.log("Sleeping for " + duration / (60 * 1000) + " seconds.");
+      setTimeout(continuation, duration);
     }
   });
 }
 
-client.query("INSERT INTO measure (beforeTime, afterTime) VALUES(?, ?)"
-          , [previous, serverTime]
-          , function(err, result) {
-              if(err)
-                throw "Unable to insert into database";
-              console.log("Stored measurements in database");
-            }
-          );
+function nap(approximization, time, continuation) {
+  time = time % 60 * 60 * 1000;
+  var duration = approximization - time;
+  var zoom     = Math.min(1, duration / (60 * 1000));
+  setTimeout(continuation, duration * zoom);
+}
 
 exports.start = function(req, res) {
   var today = new Date();
@@ -58,15 +55,32 @@ exports.start = function(req, res) {
               +today.toISOString().substr(0,10);
   var previous;
   
+  var approximation;
+  
+  client.query("SELECT approximation.beforeTime"
+              +" FROM approximation"
+  , function(err, rows, fields) {
+      if(err)
+        approximation = new Date("00:14");
+      approximation.approximation;
+    }
+  );
+  
   var start = function(continuation) {
     
-    var get = $.get(url, function(data) {
+    var get = $.get(url
+    , function(data) {
         var rooms = parser.parseRooms(data);
         var serverTime = new Date(get.getResponseHeader("date"));
+        var serverTime = serverTime.getHours() * 60 * 60 * 1000
+                       + serverTime.getMinutes() * 60 * 1000
+                       + serverTime.getSeconds() * 1000
+                       + serverTime.getMilliseconds();
         var last = true;
         $(rooms).each(function(index, room) {
           if(room.status == 1) {
-            sleep(serverTime, function(previous) {
+            nap(approximization, serverTime
+            , function(previous) {
                 client.query("INSERT INTO measure (beforeTime, afterTime) VALUES(?, ?)"
                 , [previous, serverTime]
                 , function(err, result) {
@@ -75,6 +89,7 @@ exports.start = function(req, res) {
                     console.log("Stored measurements in database");
                   }
                 );
+                wait();
               }
             );
             last = false;
@@ -92,9 +107,17 @@ exports.start = function(req, res) {
   
   var wait = function() {
     var get = $.get(url, function(data) {
-      var serverTime = new Date(get.getResponseHeader("date"));
-      sleep(serverTime, function() { start(function(previous) { wait(); }); });
-    }
+        var serverTime = new Date(get.getResponseHeader("date"));
+        var serverTime = serverTime.getHours() * 60 * 60 * 1000
+                       + serverTime.getMinutes() * 60 * 1000
+                       + serverTime.getSeconds() * 1000
+                       + serverTime.getMilliseconds();
+        idle(serverTime, function() { start(function(previous) { wait(); }); });
+      }
+    );
   }
   wait();
+  res.send(
+    { "status": true }
+  );
 }
