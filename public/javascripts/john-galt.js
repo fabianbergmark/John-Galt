@@ -75,7 +75,8 @@ function attack(findTargets, getCards) {
           , 1
         );
         setTimeout(function() {
-            //load(barrier)
+            counter.remove();
+            load(barrier)
           }
           , 1
         );

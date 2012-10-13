@@ -3,18 +3,20 @@
  * Module dependencies.
  */
 
-var express = require('express')
-  , stylus  = require('stylus')
-  , routes  = require('./routes')
-  , auth    = require('./routes/auth')
-  , room    = require('./routes/room')
-  , rooms   = require('./routes/rooms')
-  , cards   = require('./routes/cards')
-  , measure = require('./routes/measure')
-  , http    = require('http')
-  , path    = require('path')
-  , nib     = require('nib')
-  , $       = require('jquery');
+var express   = require('express')
+  , stylus    = require('stylus')
+  , routes    = require('./routes')
+  , auth      = require('./routes/auth')
+  , room      = require('./routes/room')
+  , rooms     = require('./routes/rooms')
+  , cards     = require('./routes/cards')
+  , cloud     = require('./routes/cloud')
+  , measure   = require('./routes/measure')
+  , websocket = require('./routes/websocket.js')
+  , http      = require('http')
+  , path      = require('path')
+  , nib       = require('nib')
+  , $         = require('jquery');
 
 function compile(str, path) {
   return stylus(str)
@@ -38,6 +40,7 @@ app.configure(function(){
   app.use(require('stylus').middleware(__dirname + '/public'));
   app.use(express.static(path.join(__dirname, 'public')));
 });
+
 app.configure('development', function(){
   app.use(express.errorHandler());
 });
@@ -56,13 +59,19 @@ function authenticate(req, res, next) {
 
 app.get('/', routes.index);
 app.get('/cards', authenticate, cards.list);
+app.get('/clouds', authenticate, cloud.clouds);
+app.get('/cloud:id', authenticate, cloud.cloud);
 app.get('/rooms', authenticate, rooms.list);
 app.get('/room/:day/:time/:bokid', authenticate, room.get);
 app.get('/measure/start', authenticate, measure.start);
+app.get('/measure/status', authenticate, measure.status);
+app.get('/measure/measurements', authenticate, measure.measurements);
 app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);
 
-http.createServer(app).listen(app.get('port'), function(){
+var http = http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
+
+websocket.start(http);
