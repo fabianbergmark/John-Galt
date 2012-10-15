@@ -92,6 +92,29 @@ function status() {
   return s;
 }
 
-$(document).ready(function() {
-  
+$(function() {
+  $("#datepicker").datepicker();
+  $("#sheduleModal #error #close").click(function(event) {
+      $(this).parent().hide();
+    }
+  );
+  $("#sheduleModal #submit").click(function(event) {
+      var date = $("#sheduleModal #date").val();
+      var time = $("#sheduleModal #time").val();
+      var rooms = [];
+      $("#sheduleModal #rooms input:checked").each(function() {
+          rooms.push($(this).val());
+        }
+      );
+      if(rooms.length == 0) {
+        var error = $("#sheduleModal #error");
+        error.find("strong").html("No room!");
+        error.find("p").html("Select a room");
+        error.show();
+      }
+      else {
+        shedule(new Date(date + " " + time), rooms, function(data) { console.log(data); });
+      }
+    }
+  );
 });

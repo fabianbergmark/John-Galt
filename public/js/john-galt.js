@@ -47,6 +47,22 @@ function loadCards(continuation) {
   );
 }
 
+function shedule(time, rooms, continuation) {
+  $.ajax(
+    { "type"      : "POST"
+    , "dataType"   : "json"
+    , "url"        : "/shedule/book"
+    , "data"       : 
+      { "time" : time.toISOString()
+      , "rooms": rooms
+      }
+    , "success"    : function(data) {
+        continuation(data);
+      }
+    }
+  );
+}
+
 function updateRoom(room) {
   var update = function(r) {
     room = r;
@@ -162,7 +178,7 @@ $(function() {
     }
     attack(findTargets, getCards);
   });
-
+  
   $("#start").click(function(event) {
     $("#stop").removeAttr("disabled");
     shell("Initializing");

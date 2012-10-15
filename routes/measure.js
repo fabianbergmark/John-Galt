@@ -5,10 +5,10 @@
 
 var $        = require('jquery');
 var mysql    = require('mysql');
-var parser   = require('./parser.js');
-var Timer    = require('./timer.js');
-var Barrier  = require('./barrier.js');
-var settings = require('../settings.js');
+var parser   = require('./parser');
+var Timer    = require('./timer');
+var Barrier  = require('./barrier');
+var settings = require('../settings');
 
 var client = mysql.createClient(settings.mysql);
 
