@@ -5,7 +5,7 @@ block content
     div.page-header
       center
         h1 John Galt
-      a(href="#modal", data-toggle="modal")
+      a(href="#cloudModal", data-toggle="modal")
         div#cloud
           p 0
     br
@@ -16,7 +16,10 @@ block content
       div.span3
         button#stop.btn.btn-large.btn-block.btn-danger Stop
       div.span3
-        button#attack.btn.btn-large.btn-block.btn-primary Attack
+        button#attack.btn.btn-large.btn-block.btn-inverse Attack
+      div.span3
+        a(href="#sheduleModal", data-toggle="modal")
+          button#shedule.btn.btn-large.btn-block.btn-primary Shedule
     br
     div.row
       div.span12
@@ -33,7 +36,7 @@ block content
               table#status.table
                 thead
                   th Status
-    div.row
+    div.row#lists
       div.span2
         table#cards.table.table-hover.table-condensed
           thead
@@ -50,7 +53,7 @@ block content
         table#booked.table.table-hover-table-condensed
           thead
             th Booked
-    div.modal.hide.fade#modal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+    div.modal.hide.fade#cloudModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
       div.modal-header
         button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
         h3 Clouds
@@ -62,4 +65,91 @@ block content
             div.controls
               input(type="text", name="name", placeholder="Name")
       div.modal-footer
+        div.btn(data-dismiss="modal", aria-hidden="true") close
+    div.modal.hide.fade#sheduleModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+      div.modal-header
+        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
+        h3 Shedule booking
+      div.modal-body
+        div.alert.alert-error.hide#error
+          button.close(type="button")#close&times;
+          strong
+          p
+        div.row-fluid
+          div.span5
+            table.table.table-condensed#rooms
+              thead
+                th rooms
+              tbody
+                tr
+                  td 1. Leibnitz
+                  td
+                    input(type="checkbox", value="Grp01")
+                tr
+                  td 2.Pascal
+                  td
+                    input(type="checkbox", value="Grp02")
+                tr
+                  td 3.Scheele
+                  td
+                    input(type="checkbox", value="Grp03")
+                tr
+                  td 4. Leopold
+                  td
+                    input(type="checkbox", value="Grp04")
+                tr
+                  td 5. Agricola
+                  td
+                    input(type="checkbox", value="Grp05")
+                tr
+                  td 6. Bernoulli
+                  td
+                    input(type="checkbox", value="Grp06")
+                tr
+                  td 7. Dürer
+                  td
+                    input(type="checkbox", value="Grp07")
+                tr
+                  td 8. Galvani
+                  td
+                    input(type="checkbox", value="Grp08")
+                tr
+                  td 9. Mikroskopet
+                  td
+                    input(type="checkbox", value="Grp09")
+                tr
+                  td 10. Teleskopet
+                  td
+                    input(type="checkbox", value="Grp10")
+                tr
+                  td 11. Watt
+                  td
+                    input(type="checkbox", value="Grp11")
+                tr
+                  td 12. Santorio
+                  td
+                    input(type="checkbox", value="Grp12")
+                tr
+                  td 13. N Galleriet
+                  td
+                    input(type="checkbox", value="Grp13")
+          div.span4.offset1
+            br
+            div.input-append.date#datepicker
+              input(type="text", value="02-16-2012", data-date-format="mm/dd/yy", readonly)#date
+              span.add-on
+                i.icon-calendar
+            br
+            div.input-append
+              select#time
+                option 08:00
+                option 10:00
+                option 12:00
+                option 13:00
+                option 15:00
+                option 17:00
+              span.add-on
+                i.icon-time
+      div.modal-footer
+        div.btn#submit submit
         div.btn(data-dismiss="modal", aria-hidden="true") close

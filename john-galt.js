@@ -12,7 +12,8 @@ var express   = require('express')
   , cards     = require('./routes/cards')
   , cloud     = require('./routes/cloud')
   , measure   = require('./routes/measure')
-  , websocket = require('./routes/websocket.js')
+  , shedule   = require('./routes/shedule')
+  , websocket = require('./routes/websocket')
   , http      = require('http')
   , path      = require('path')
   , nib       = require('nib')
@@ -66,6 +67,8 @@ app.get('/room/:day/:time/:bokid', authenticate, room.get);
 app.get('/measure/start', authenticate, measure.start);
 app.get('/measure/status', authenticate, measure.status);
 app.get('/measure/measurements', authenticate, measure.measurements);
+app.get('/shedule', authenticate, shedule.list);
+app.post('/shedule/book', authenticate, shedule.shedule);
 app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);
@@ -74,4 +77,5 @@ var http = http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
 
+shedule.load();
 websocket.start(http);

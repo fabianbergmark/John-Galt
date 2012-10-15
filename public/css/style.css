@@ -1,0 +1,56 @@
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+#cloud {
+  float: right;
+  width: 38px;
+  height: 26px;
+  position: relative;
+  background: url("/img/cloud.png");
+}
+#cloud p {
+  position: absolute;
+  font: 14px "Source-Code-Pro";
+  left: 15px;
+  bottom: 1px;
+  margin: 0;
+  color: #fff;
+  font-size: 1.2em;
+}
+#console {
+  font: 14px "Source-Code-Pro";
+  color: #839496;
+  position: relative;
+  min-height: 308px;
+  font-weight: bold;
+  background-color: #002b36;
+}
+#console #text p {
+  margin-bottom: 2px;
+}
+#console #commandline {
+  float: bottom;
+  bottom: 20px;
+  position: absolute;
+}
+#console #commandline input {
+  width: 77%;
+  border: none;
+  box-shadow: none;
+  font-weight: bold;
+  color: #fff;
+  margin-left: 10px;
+  background-color: #002b36;
+  font: 14px "Source-Code-Pro";
+}
+.check:hover {
+  color: #008000;
+  cursor: pointer;
+}
+.cross:hover {
+  color: #f00;
+  cursor: pointer;
+}
