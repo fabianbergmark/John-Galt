@@ -30,10 +30,10 @@ var timetable =
   , { "from": 17 * 60 * 60 * 1000
     , "to"  : 20 * 60 * 60 * 1000 } ];
 
-function idle(approximization, time, continuation) {
+function idle(approximation, time, continuation) {
   var found = false;
   $(timetable).each(function(index, range) {
-    if(time - range.from  < approximization) {
+    if(time - range.from  < approximation) {
       found = true;
       var duration = Math.max(0, range.from - time);
       console.log("Sleeping for " + duration / 1000 + " seconds.");
@@ -48,7 +48,6 @@ function idle(approximization, time, continuation) {
 
 function nap(approximation, time, continuation) {
   time = time % 60 * 60 * 1000;
-  console.log(time);
   var duration = approximation - time;
   var zoom     = Math.min(1, duration / (60 * 1000));
   console.log("Napping for " + duration * zoom / 1000 + " seconds.");
