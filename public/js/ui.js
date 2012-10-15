@@ -39,8 +39,8 @@ function addAvailableRoom(room, on, off) {
            + "</td>");
   var c = check(on, off);
   row.append(r).append(c);
-  if($("#rooms tbody").children().length < 10)
-    $("#rooms").append(row);
+  if($("#lists #rooms tbody").children().length < 10)
+    $("#lists #rooms").append(row);
   return row;
 }
   
@@ -55,7 +55,7 @@ function addUnconfirmedRoom(room, on, off) {
               + "</td>");
   var c = check(on, off);
   row.append(room).append(c);
-  $("#yellow").append(row);
+  $("#lists #yellow").append(row);
   return row;
 }
 
@@ -70,7 +70,7 @@ function addBookedRoom(room, on, off) {
               + "</td>");
   var c = check(on, off);
   row.append(room).append(c);
-  $("#booked").append(row);
+  $("#lists #booked").append(row);
   return row;
 }
 
@@ -82,7 +82,7 @@ function addCard(card, on, off) {
               + "</td>");
   var c = check(on, off);
   row.append(td).append(c);
-  $("#cards").append(row);
+  $("#lists #cards").append(row);
   return row;
 }
   

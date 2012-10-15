@@ -39,11 +39,7 @@ exports.load = function() {
               +" WHERE time>NOW()"
   , function(err, rows, fields) {
       if(err)
-        res.send(
-          { "status": false
-          , "error" : err
-          }
-        );
+        throw err;
       else {
         rows.forEach(function(row) {
             var event =
