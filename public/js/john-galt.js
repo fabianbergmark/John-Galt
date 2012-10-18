@@ -32,6 +32,35 @@ function loadRoom(room, continuation) {
   );
 }
 
+function loadBookings(cards, continuation) {
+  var loop = function(acc, i) {
+    var card = cards[i];
+    $.ajax(
+      { "type"    : "GET"
+      , "dataType": "json"
+      , "url"     : "/bookings/" + card.number
+      , "success" : function(data) {
+          if(data.status) {
+            data.bookings.forEach(function(booking) {
+                acc.push(
+                  { "card": card.number
+                  , "room": booking
+                  }
+                );
+              }
+            );
+            if(++i < cards.length)
+              loop(acc, i);
+            else
+              continuation(acc);
+          }
+        }
+      }
+    );
+  }
+  loop([], 0);
+}
+
 function loadCards(continuation) {
   $.ajax(
     { "type"       : "GET"
@@ -224,26 +253,47 @@ $(function() {
         }
         else if(room.status == 2) {
           var on = function() {
-            if(room.owner == "John Galt") {
+            
+          }
+          var off = function() {
+            
+          }
+        }
+        addRoom(room, on, off);
+      });
+      var continuation = function(bookings) {
+        bookings.forEach(function(booking) {
+            var off = function() {
               book(room, state.cards[0], function() {
                   shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
                   updateRoom(room);
                 }
               );
             }
-          }
-          var off = function() {
-            if(room.owner == "John Galt") {
-              unbook(room, state.cards[0], function() {
-                  shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
-                  updateRoom(room);
+            var on = function() {
+              if(!room.hasOwnProperty("id")) {
+                var continuation = function(r) {
+                  room = r;
+                  unbook(room, state.cards[0], function() {
+                      shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+                      updateRoom(room);
+                    }
+                  );
                 }
-              );
+                loadRoom(room,continuation);
+              }
+              else
+                unbook(room, state.cards[0], function() {
+                    shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+                    updateRoom(room);
+                  }
+                );
             }
+            addBookedRoom(on, off);
           }
-        }
-        addRoom(room, on, off);
-      });
+        );
+      }
+      loadBookings(state.cards, continuation);
     }
     loadRooms(continuation);
   });

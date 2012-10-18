@@ -49,8 +49,21 @@ function nap(approximation, time, continuation) {
 }
 
 function insert(from, to) {
-  client.query("INSERT INTO measurement (beforeTime, afterTime) VALUES(?, ?)"
-  , [from, to]
+  var offset = from.getHours() * 60 * 60 * 1000
+             + from.getMinutes() * 60 * 1000
+             + from.getSeconds() * 1000
+             + from.getMilliseconds();
+  var period = 0;
+  timetable.forEach(function(time) {
+      if(time.from < offset) {
+        period++;
+      }
+      else
+        return false;
+    }
+  );
+  client.query("INSERT INTO measurement (beforeTime, afterTime, period) VALUES(?, ?, ?)"
+  , [from, to, period]
   , function(err, result) {
       if(err)
         throw "Unable to insert into database";
@@ -188,26 +201,44 @@ exports.start = function(req, res) {
                        + serverTime.getMinutes() * 60 * 1000
                        + serverTime.getSeconds() * 1000
                        + serverTime.getMilliseconds();
-        var last = true;
+        var green = 0;
+        var yellow = 0;
         $(rooms).each(function(index, room) {
-          if(room.status == 1) {
-            nap(approximation, serverTime
-            , function() {
-                start(approximation, function(after) {
-                    var before = new Date(get.getResponseHeader("date"));
-                    insert(before, after);
-                    wait();
-                  }
-                );
-              }
-            );
-            last = false;
+          var time = new Date(room.time);
+          var time = time.getHours() * 60 * 60 * 1000
+                   + time.getMinutes() * 60 * 1000
+                   + time.getMilliseconds() * 1000;
+          if(time < serverTime) {
             return false;
           }
+          switch(room.status) {
+            case 1:
+              yellow++;
+              nap(approximation, serverTime
+              , function() {
+                  start(approximation, function(after) {
+                      var before = new Date(get.getResponseHeader("date"));
+                      insert(before, after);
+                      wait();
+                    }
+                  );
+                }
+              );
+              return false;
+            case 0:
+              green++;
+              break;
+          }
         });
-        if(last) {
-          serverTime = new Date(get.getResponseHeader("date"));
-          continuation(serverTime);
+        if(yellow == 0) {
+          if(green == 0) {
+            console.log("Undeterministic measurement, discarding.");
+            wait();
+          }
+          else {
+            serverTime = new Date(get.getResponseHeader("date"));
+            continuation(serverTime);
+          }
         }
       }
     );

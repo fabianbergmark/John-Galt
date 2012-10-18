@@ -22,9 +22,6 @@ function addRoom(room, on, off) {
       return addAvailableRoom(room, on, off);
     case 1:
       return addUnconfirmedRoom(room, on, off);
-    case 2:
-      if(room.owner === "John Galt")
-        return addBookedRoom(room, on, off);
   }
 }
 

@@ -11,6 +11,7 @@ var express   = require('express')
   , rooms     = require('./routes/rooms')
   , cards     = require('./routes/cards')
   , cloud     = require('./routes/cloud')
+  , bookings  = require('./routes/bookings')
   , measure   = require('./routes/measure')
   , shedule   = require('./routes/shedule')
   , websocket = require('./routes/websocket')
@@ -64,6 +65,7 @@ app.get('/clouds', authenticate, cloud.clouds);
 app.get('/cloud:id', authenticate, cloud.cloud);
 app.get('/rooms', authenticate, rooms.list);
 app.get('/room/:day/:time/:bokid', authenticate, room.get);
+app.get('/bookings/:card', authenticate, bookings.bookings);
 app.get('/measure/start', authenticate, measure.start);
 app.get('/measure/status', authenticate, measure.status);
 app.get('/measure/measurements', authenticate, measure.measurements);
@@ -73,9 +75,11 @@ app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);
 
-var http = http.createServer(app).listen(app.get('port'), function(){
-  console.log("Express server listening on port " + app.get('port'));
-});
+var http = http.createServer(app).listen(app.get('port')
+  , function() {
+    console.log("Express server listening on port " + app.get('port'));
+  }
+);
 
 shedule.load();
 websocket.start(http);
