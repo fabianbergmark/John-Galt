@@ -1,4 +1,3 @@
-
 /*
  * GET registered cards.
  */
@@ -21,6 +20,9 @@ exports.list = function(req, res) {
           }
         , { "owner"  : "Carl-Arvid Ewerbring"
           , "number" : "0111410564"
+          }
+        , { "owner"  : "John Pertoft"
+          , "number" : "0111356786"
           }
         ]
     }
