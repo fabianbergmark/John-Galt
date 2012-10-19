@@ -9,62 +9,83 @@ var settings = require('../settings');
 
 var client = mysql.createClient(settings.mysql);
 
-var events = [];
+load(shedule);
 
-function shedule(event) {
-  if(event.time.getTime() - Date.now() <= 0)
+function book(bokid, day, time) {
+  var room =
+    { "bokid": bokid
+    , "day"  : day
+    , "time" : time
+    };
+}
+
+function shedule(bokid, day, time) {
+  var at = new Date(day + " " + time);
+  if(at.getTime() - Date.now() <= 0)
     return false;
   else {
     var now  = new Date();
-    var time = event.time;
     var limit = new Date();
-    limit.setDate(now.getDate());
     limit.setHours(0, 0, 0, 0);
     limit.setDate(limit.getDate() + 6);
-    if(time.getTime() > limit.getTime()) {
-      var midnight = new Date(time.getTime());
-      midnight.setHours(0, 0, 0, 0);
-      var sleep = new Date(time.getTime());
-      sleep.setDate(sleep.getDate()-5);
-      sleep.setHours(0, 0, 0, 0);
-      var t = sleep.getTime() - Date.now();
-      console.log("Sleeping for " + t/1000 + " seconds.");
+    if(at.getTime() > limit.getTime()) {
+      var wake = new Date(at);
+      wake.setDate(wake.getDate()-5);
+      wake.setHours(0, 0, 0, 0);
+      var sleep = wake.getTime() - Date.now();
+      console.log("Sleeping for " + sleep/1000 + " seconds.");
+      setTimeout(function() {
+          book(bokid, day, time);
+        }
+      , sleep
+      );
+    }
+    else {
+      book(bokid, day, time);
     }
   }
   return true;
 }
 
-exports.load = function() {
+function load(continuation) {
   client.query("SELECT room, time FROM shedule"
               +" WHERE time>NOW()"
   , function(err, rows, fields) {
       if(err)
         throw err;
       else {
+        var events = [];
         rows.forEach(function(row) {
             var event =
               { "room" : row.room
               , "time" : row.time
               }
-            shedule(event);
+            events.push(event);
           }
         );
+        continuation(events);
       }
     }
   );
 }
 
+exports.load = load;
+
 exports.list = function(req, res) {
-  res.send(events);
+  load(function(events) {
+      res.send(events);
+    }
+  );
 }
 
 exports.shedule = function(req, res) {
   var post = req.body;
-  var rooms = post.rooms;
-  var time = new Date(post.time);
-  var room = rooms[0];
+  var day = post.day;
+  var time = post.time;
+  var bokid = post.bokid;
+  var at = new Date(Date.parse(day + " " + time));
   client.query("INSERT INTO shedule(room, time) VALUES(?, ?)"
-  , [room, time]
+  , [bokid, at]
   , function(err, rows, fields) {
       if(err)
         res.send(
@@ -73,11 +94,7 @@ exports.shedule = function(req, res) {
           }
         );
       else {
-        var event =
-          { "room": room
-          , "time": time
-          };
-        if(shedule(event))
+        if(shedule(bokid, day, time))
           res.send({ "status": true });
         else
           res.send(

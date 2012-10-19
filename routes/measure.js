@@ -3,49 +3,140 @@
  * Run measurements against KTH.
  */
 
-var $        = require('jquery');
-var mysql    = require('mysql');
-var parser   = require('./parser');
-var settings = require('../settings');
+var $         = require('jquery');
+var mysql     = require('mysql');
+var parser    = require('./parser');
+var binomial  = require('./binomial');
+var settings  = require('../settings');
+var timetable = require('./timetable');
 
 var client = mysql.createClient(settings.mysql);
 
-var timetable =
-  [ { "from": 8  * 60 * 60 * 1000
-    , "to"  : 10 * 60 * 60 * 1000 }
-  , { "from": 10 * 60 * 60 * 1000
-    , "to"  : 12 * 60 * 60 * 1000 }
-  , { "from": 12 * 60 * 60 * 1000
-    , "to"  : 13 * 60 * 60 * 1000 }
-  , { "from": 13 * 60 * 60 * 1000
-    , "to"  : 15 * 60 * 60 * 1000 }
-  , { "from": 15 * 60 * 60 * 1000
-    , "to"  : 17 * 60 * 60 * 1000 }
-  , { "from": 17 * 60 * 60 * 1000
-    , "to"  : 20 * 60 * 60 * 1000 } ];
+nextPeriod();
 
-function idle(approximation, time, continuation) {
-  var found = false;
-  $(timetable).each(function(index, range) {
-    if(time - range.from  < approximation) {
-      found = true;
-      var duration = Math.max(0, range.from - time);
-      console.log("Sleeping for " + duration / 1000 + " seconds.");
-      setTimeout(continuation, duration);
-      return false;
+function nextPeriod() {
+  var today = new Date();
+  var u = url(today);
+  var now = today.getHours()   * 60 * 60 * 1000
+          + today.getMinutes() * 60 * 1000
+          + today.getSeconds() * 1000
+          + today.getMilliseconds();
+  var continuation = function(approximation) {
+    var found = false;
+    $(timetable.timetable).each(function(index, range) {
+      if(now < range.from) {
+        found = true;
+        var duration = Math.max(0, range.from - now);
+        console.log("Sleeping for " + duration / 1000 + " seconds.");
+        setTimeout(function() {
+            start(
+              u
+            , approximation
+            , function(previous) {
+                nextPeriod();
+              }
+            );
+          }
+        , duration
+        );
+        return false;
+      }
+    });
+    if(!found) {
+      var next = 32 * 60 * 60 * 1000 - now;
+      console.log("Sleeping " + next / 1000 + " seconds until next period.");
+      setTimeout(function() {
+          start(
+            u
+          , approximation
+          , function(previous) {
+              nextPeriod();
+            }
+          );
+        }
+      , next);
     }
-  });
-  if(!found) {
-    console.log("No period found, quitting.");
   }
+  approximation(continuation);
+}
+
+var start = function(url, approximation, continuation) {
+  
+  var get = $.ajax(
+    { "url"    : url
+    , "error"  : function() {
+        console.log("AJAX error, retrying...");
+        setTimeout(function() {
+            start(url, approximation, continuation);
+          }
+        , 10 * 1000
+        );
+      }
+    , "success": function(data) {
+        var rooms = parser.parseRooms(data);
+        var serverTime = new Date(get.getResponseHeader("date"));
+        var serverTime = serverTime.getHours() * 60 * 60 * 1000
+                       + serverTime.getMinutes() * 60 * 1000
+                       + serverTime.getSeconds() * 1000
+                       + serverTime.getMilliseconds();
+        var green = 0;
+        var yellow = 0;
+        $(rooms).each(function(index, room) {
+          var time = new Date(room.day + " " + room.time);
+          var time = time.getHours() * 60 * 60 * 1000
+                   + time.getMinutes() * 60 * 1000
+                   + time.getMilliseconds() * 1000;
+          if(Math.abs(serverTime-time) < 60 * 60 * 1000) {
+            switch(room.status) {
+              case 1:
+                yellow++;
+                nap(approximation, serverTime
+                , function() {
+                    start(url, approximation, function(after) {
+                        var before = new Date(get.getResponseHeader("date"));
+                        insert(before, after);
+                        nextPeriod();
+                      }
+                    );
+                  }
+                );
+                return false;
+              case 0:
+                green++;
+                break;
+            }
+          }
+        });
+        if(yellow == 0) {
+          if(green == 0) {
+            console.log("Undeterministic measurement, discarding.");
+            nextPeriod();
+          }
+          else {
+            serverTime = new Date(get.getResponseHeader("date"));
+            continuation(serverTime);
+          }
+        }
+      }
+    }
+  );
 }
 
 function nap(approximation, time, continuation) {
   time %= 60 * 60 * 1000;
   var duration = Math.abs(approximation - time);
-  var zoom     = Math.min(1, duration / (approximation*2));
-  console.log("Napping for " + duration * zoom / 1000 + " seconds.");
-  setTimeout(continuation, duration * zoom);
+  var z        = zoom(duration, 15);
+  console.log("Napping for " + duration * z / 1000 + " seconds.");
+  setTimeout(continuation, duration * z);
+}
+
+function zoom(duration, half) {
+  return Math.exp(-half*Math.log(2)/Math.abs(duration))*0.8;
+}
+
+function url(today) {
+  return "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp?bokdag="
+         + today.toISOString().substr(0,10);
 }
 
 function insert(from, to) {
@@ -54,7 +145,7 @@ function insert(from, to) {
              + from.getSeconds() * 1000
              + from.getMilliseconds();
   var period = 0;
-  timetable.forEach(function(time) {
+  timetable.timetable.forEach(function(time) {
       if(time.from < offset) {
         period++;
       }
@@ -75,55 +166,21 @@ function insert(from, to) {
 function approximation(continuation) {
   client.query("SELECT beforeTime, afterTime"
               +" FROM measurement"
-  , function(err, rows, fields) {
+  , function(err, rows) {
       if(err)
         throw err;
       else {
         if(rows.length > 0) {
-          var min = rows[0].beforeTime.getTime();
-          min %= 60 * 60 * 1000;
-          var max = rows[0].afterTime.getTime();
-          max %= 60 * 60 * 1000;
+          var measurements = [];
           rows.forEach(function(row) {
-              var before = row.beforeTime.getTime();
-              before %= 60 * 60 * 1000
-              if(before < min) {
-                min = before;
-              }
-              var after = row.afterTime.getTime();
-              after %= 60 * 60 * 1000;
-              if(after > max) {
-                max = after;
-              }
+              measurements.push(
+                { "x1": row.beforeTime
+                , "x2": row.afterTime
+                }
+              );
             }
           );
-          min /= 1000;
-          max /= 1000;
-          var weights = [];
-          var span = max - min;
-          for(var i = 0; i <= span; i++)
-            weights.push(0);
-          rows.forEach(function(row) {
-              var first = row.beforeTime.getTime();
-              first %= 60 * 60 * 1000;
-              first /= 1000;
-              first = first - min;
-              var last  = row.afterTime.getTime();
-              last %= 60 * 60 * 1000;
-              last /= 1000;
-              last = last - min;
-              for(var i = first; i <= last; i++) {
-                weights[i]++;
-              }
-            }
-          );
-          var sum = 0;
-          var weight = 0;
-          for(var i = min; i <= max; i++) {
-            sum    += weights[i-min]*i;
-            weight += weights[i-min];
-          }
-          continuation(sum/weight * 1000);
+          continuation(binomial.mean(measurements));
         }
         else
           continuation(15 * 60 * 1000 + 50 * 1000);
@@ -142,7 +199,7 @@ exports.connect = function(req, res) {
   
 }
 
-exports.status = function(req, res) {
+exports.approximation = function(req, res) {
   var continuation = function(approximation) {
     res.send(
       { "approximation": approximation }
@@ -152,7 +209,7 @@ exports.status = function(req, res) {
 }
 
 exports.measurements = function(req, res) {
-  client.query("SELECT beforeTime, afterTime"
+  client.query("SELECT period, beforeTime, afterTime"
               +" FROM measurement"
   , function(err, rows, fields) {
       if(err)
@@ -164,9 +221,33 @@ exports.measurements = function(req, res) {
       else {
         var measurements = [];
         rows.forEach(function(row) {
+            var before = row.beforeTime;
+            var after  = row.afterTime;
+            var period = row.period;
             var measurement =
-              { "before": row.beforeTime
-              , "after" : row.afterTime
+              { "period": period
+              , "before": new Date(
+                  Date.UTC(
+                    before.getFullYear()
+                  , before.getMonth()
+                  , before.getDate()
+                  , before.getHours()
+                  , before.getMinutes()
+                  , before.getSeconds()
+                  , before.getMilliseconds()
+                  )
+                )
+              , "after" : new Date(
+                  Date.UTC(
+                    after.getFullYear()
+                  , after.getMonth()
+                  , after.getDate()
+                  , after.getHours()
+                  , after.getMinutes()
+                  , after.getSeconds()
+                  , after.getMilliseconds()
+                  )
+                )
               };
             measurements.push(measurement);
           }
@@ -178,90 +259,5 @@ exports.measurements = function(req, res) {
         );
       }
     }
-  );
-}
-
-exports.stop = function(req, res) {
-  
-}
-
-exports.start = function(req, res) {
-  var today = new Date();
-  var url = "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp?bokdag="
-              +today.toISOString().substr(0,10);
-  var previous;
-  
-  var start = function(approximation, continuation) {
-    
-    var get = $.get(url
-    , function(data) {
-        var rooms = parser.parseRooms(data);
-        var serverTime = new Date(get.getResponseHeader("date"));
-        var serverTime = serverTime.getHours() * 60 * 60 * 1000
-                       + serverTime.getMinutes() * 60 * 1000
-                       + serverTime.getSeconds() * 1000
-                       + serverTime.getMilliseconds();
-        var green = 0;
-        var yellow = 0;
-        $(rooms).each(function(index, room) {
-          var time = new Date(room.time);
-          var time = time.getHours() * 60 * 60 * 1000
-                   + time.getMinutes() * 60 * 1000
-                   + time.getMilliseconds() * 1000;
-          if(time < serverTime) {
-            return false;
-          }
-          switch(room.status) {
-            case 1:
-              yellow++;
-              nap(approximation, serverTime
-              , function() {
-                  start(approximation, function(after) {
-                      var before = new Date(get.getResponseHeader("date"));
-                      insert(before, after);
-                      wait();
-                    }
-                  );
-                }
-              );
-              return false;
-            case 0:
-              green++;
-              break;
-          }
-        });
-        if(yellow == 0) {
-          if(green == 0) {
-            console.log("Undeterministic measurement, discarding.");
-            wait();
-          }
-          else {
-            serverTime = new Date(get.getResponseHeader("date"));
-            continuation(serverTime);
-          }
-        }
-      }
-    );
-  }
-  
-  // Wait for new gap
-  
-  var wait = function() {
-    var continuation = function(approximation) {
-      var get = $.get(url, function(data) {
-          var serverTime = new Date(get.getResponseHeader("date"));
-          var serverTime = serverTime.getHours() * 60 * 60 * 1000
-                         + serverTime.getMinutes() * 60 * 1000
-                         + serverTime.getSeconds() * 1000
-                         + serverTime.getMilliseconds();
-          idle(approximation, serverTime, function() { start(approximation, function(previous) { wait(); }); });
-        }
-      );
-    }
-    approximation(continuation);
-  }
-  wait();
-  res.send(
-    { "status": true }
   );
 }

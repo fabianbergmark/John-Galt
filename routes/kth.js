@@ -3,7 +3,7 @@
  * KTH booking API.
  */
  
- var $ = require('jquery');
+var $ = require('jquery');
 
 function time2period(time) {
   switch(time) {

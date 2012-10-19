@@ -1,300 +1,306 @@
-function loadRooms(continuation) {
-  $.ajax(
-    { "type"    : "GET"
-    , "dataType": "json"
-    , "url"     : "/rooms"
-    , "success" : function(data) {
-        continuation(data.rooms);
+function attacker(continuation) {
+  loadCards(function(cards) {
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      var limit = new Date();
+      limit.setHours(0,0,0,0);
+      limit.setDate(limit.getDate() - 5);
+      var available = [];
+      function loop(card, continuation) {
+        var booked = 0;
+        var usable = true;
+        loadBookkeepingCard(card, function(history) {
+            for(var i = 0; i < history.length; i++) {
+              var booking = history[i];
+              var time = new Date(booking.day + " " + booking.time);
+              if(time.getTime() > today.getTime()) {
+                usable = false;
+                break;
+              }
+              else if(time.getTime() > limit.getTime())
+                if(++booked >= 2) {
+                  usable = false;
+                  break;
+                }
+            }
+            if(usable) {
+              shell(card.number + " has " + (2 - booked) + " charges left.");
+              available.push(
+                { "card"   : card
+                , "charges": 2 - booked
+                }
+              );
+            }
+            continuation();
+          }
+        );
       }
-    }
-  );
-}
-
-function loadRoom(room, continuation) {
-  $.ajax(
-    { "type"    : "GET"
-    , "dataType": "json"
-    , "url"     : "/room/"
-        + room.day
-        + '/' + room.time
-        + '/' + room.bokid
-    , "success" : function(data) {
-        switch(data.status) {
-          case true:
-            continuation(data.room);
-            break;
-          case false:
-            throw data.error;
-            break;
-        }
-      }
-    }
-  );
-}
-
-function loadBookings(cards, continuation) {
-  var loop = function(acc, i) {
-    var card = cards[i];
-    $.ajax(
-      { "type"    : "GET"
-      , "dataType": "json"
-      , "url"     : "/bookings/" + card.number
-      , "success" : function(data) {
-          if(data.status) {
-            data.bookings.forEach(function(booking) {
-                acc.push(
-                  { "card": card.number
-                  , "room": booking
-                  }
-                );
+      var accumulator = function(i) {
+        if(i >= cards.length) {
+          if(available.length > 0) {
+            available.sort(function(c1, c2) {
+                return c1.charges - c2.charges;
               }
             );
-            if(++i < cards.length)
-              loop(acc, i);
-            else
-              continuation(acc);
+            var card = available[0].card;
+            continuation(card);
           }
         }
+        else {
+          loop(cards[i++], function() { accumulator(i); });
+        }
       }
-    );
-  }
-  loop([], 0);
-}
-
-function loadCards(continuation) {
-  $.ajax(
-    { "type"       : "GET"
-    , "dataType"   : "json"
-    , "url"        : "/cards"
-    , "success"    : function(data) {
-        continuation(data.cards);
-      }
-    , "error"      : function(request, error, code) {
-        console.log(error);
-      }
+      accumulator(0);
     }
   );
 }
 
-function shedule(time, rooms, continuation) {
-  $.ajax(
-    { "type"      : "POST"
-    , "dataType"   : "json"
-    , "url"        : "/shedule/book"
-    , "data"       : 
-      { "time" : time.toISOString()
-      , "rooms": rooms
-      }
-    , "success"    : function(data) {
-        continuation(data);
-      }
-    }
-  );
-}
-
-function updateRoom(room) {
-  var update = function(r) {
-    room = r;
-    shell("Updated " + room.bokid + " @" + room.day + " #" + room.time);
-  }
-  loadRoom(room, update);
-}
-
-function attack(findTargets, getCards) {
+function bruteforce(card, room, continuation) {
   function load(previous) {
-    var update = function(rooms) {
+    var update = function(room) {
       previous.stop();
-      var targets = findTargets(rooms);
-      if(targets.length > 0 && getCards().length > 0) {
-        var target  = targets[0];
-        shell("Attacking target " + target.bokid + ' @' + target.day + " #" + target.time);
-        var barrier = new Barrier();
-        var i = 0;
-        var counter = status();
-        setTimeout(function() {
-            loop(target, barrier, function() {
-                counter.html("<p>" + i++ + "</p>");
-              }
-            );
-          }
-          , 1
-        );
-        setTimeout(function() {
-            counter.remove();
-            load(barrier)
-          }
-          , 1
-        );
-      }
-      else {
-        shell("Stopping attack");
-      }
-    }
-    loadRooms(update);
-  }
-  function loop(target, barrier, callback) {
-    var cards = getCards();
-    var semaphore = new Semaphore(function() {
-        setTimeout(function() { loop(target, barrier, callback); }, 100);
-      }
-    );
-    if(barrier.isActive()) {
-      semaphore.increment();
-      $(cards).each(function(i, card) {
-        if(barrier.isActive()) {
-          semaphore.increment();
-          book(target, card, function() {
-              semaphore.decrement();
+      switch(room.status) {
+        case 2:
+          continuation(room);
+        case 1:
+          var barrier = new Barrier();
+          shell("Attacking target " + room.bokid + " @" + room.day + " #" + room.time);
+          setTimeout(function() {
+          loop(room, barrier, function() { });
+            }
+            , 10
+          );
+          setTimeout(function() {
+              load(barrier);
+            }
+            , 10
+          );
+          break;
+        case 0:
+          book(room, card, function() {
+              continuation(room);
             }
           );
-          callback();
+          break;
+      };
+    }
+    loadRoom(room, update);
+  }
+  function loop(room, barrier) {
+    if(barrier.isActive()) {
+      var semaphore = new Semaphore(function() {
+          setTimeout(function() {
+              loop(room, barrier);
+            }
+            , 100
+          );
         }
-        else
-          return false;
-      });
+      );
+      semaphore.increment();
+      book(room, card, function() {
+          semaphore.decrement();
+        }
+      );
       semaphore.decrement();
     }
     else
       shell("Breaking loop");
   }
-  setTimeout(function() { load(new Barrier()); }, 1);
+  load(new Barrier());
 }
 
-$(function() {
-  var state = 
-    { "cards": []
-    , "rooms": [] };
-  $("#stop").attr("disabled", "disabled");
-  $("#start").attr("disabled", "disabled");
-  var continuation = function(cards) {
-    $(cards).each(function(index, card) {
-      var on = function() {
-        cards.push(card);
-        shell("Registered card [" + card.number + "] (" + card.owner + ")");
+function attack() {
+  var now = new Date();
+  
+  function findTargets(rooms, continuation) {
+    var targets = [];
+    for(var i = 0; i < rooms.length; i++) {
+      var room = rooms[i];
+      var time = new Date(room.day + " " + room.time);
+      var diff = now.getTime() - time.getTime();
+      switch(room.status) {
+        case 0:
+          if(diff > 0 && diff < 30 * 60 * 1000) {
+            continuation(room);
+            return;
+          }
+          break;
+        case 1:
+          targets.push(room);
+          break;
       }
-      var off = function() {
-        cards = $.grep(cards, function(c) {
-          card !== c;
-        });
-        shell("Unregistered card [" + card.number + "] (" + card.owner + ")");
-      }
-      addCard(card, on, off);
-    });
-    state.cards = cards;
-    $("#start").removeAttr("disabled");
+    }
+    if(targets.length > 0)
+      continuation(targets[0]);
+    else
+      shell("No targets, shutting down.");
   }
-  loadCards(continuation);
   
-  $("#stop").click(function(event) {
-    
-  });
-  
-  $("#attack").click(function(event) {
-    shell("Starting attack");
-    var findTargets = function(rooms) {
-      var targets = [];
-      $(rooms).each(function(index, room) {
-        switch(room.status) {
-          case 1:
-            targets.push(room);
-            break;
+  attacker(function(card) {
+      shell(card.number + " will be used.");
+      loadRoomsDay(now, function(rooms) {
+          findTargets(rooms, function(room) {
+              function confirm(continuation) {
+                loadBookings([card], function(bookings) {
+                    bookings.forEach(function(booking) {
+                        if(room.bokid == booking.bokid
+                        && room.time  == booking.time
+                        && room.day   == booking.day) {
+                          continuation(true);
+                        }
+                      }
+                    )
+                  }
+                );
+                continuation(false);
+              }
+              bruteforce(card, room, function() {
+                  switch(room.status) {
+                    case 0:
+                      loadRoom(room, function(update) {
+                          switch(update.status) {
+                            case 0:
+                              shell("Unable to book, shutting down.");
+                              break;
+                            case 2:
+                              confirm(function(status) {
+                                  if(status)
+                                    shell("Your room: " + room.bokid);
+                                  else
+                                    shell("Someone beat us to it!");
+                                }
+                              );
+                              break;
+                          }
+                        }
+                      );
+                      break;
+                    case 2:
+                      confirm(function(status) {
+                          if(status)
+                            shell("Your room: " + room.bokid);
+                          else
+                            shell("Someone beat us to it!");
+                        }
+                      );
+                      break;
+                  }
+                }
+              );
+            }
+          );
         }
-      });
-      return targets;
+      );
     }
-    var getCards = function() {
-      return state.cards;
+  );
+}
+
+function displayRooms(rooms) {
+  $(rooms).each(function(index, room) {
+      if(room.status == 0) {
+        var off = function() {
+          book(room, state.cards[0], function() {
+              shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
+              updateRoom(room);
+            }
+          );
+        }
+        var on = function() {
+          if(!room.hasOwnProperty("id")) {
+            var continuation = function(r) {
+              room = r;
+              unbook(room, state.cards[0], function() {
+                  shell("Unbooked " + room.bokid + ' @' + room.day + " #" + room.time);
+                  updateRoom(room);
+                }
+              );
+            }
+            loadRoom(room,continuation);
+          }
+          else
+            unbook(room, state.cards[0], function() {
+                shell("Unbooked " + room.bokid + ' @' + room.day + " #" + room.time);
+                updateRoom(room);
+              }
+            );
+        };
+      }
+      else if(room.status == 1) {
+        var on  = function() { };
+        var off = function() { };
+      }
+      else if(room.status == 2) {
+        var on  = function() { };
+        var off = function() { };
+      }
+      addRoom(room, on, off);
     }
-    attack(findTargets, getCards);
-  });
-  
-  $("#start").click(function(event) {
-    $("#stop").removeAttr("disabled");
-    shell("Initializing");
-    var continuation = function(rooms) {
-      $("#start").html("Reload");
-      state.rooms = rooms;
-      $(rooms).each(function(index, room) {
-        if(room.status == 0) {
-          var off = function() {
-            book(room, state.cards[0], function() {
-                shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
+  );
+}
+
+function displayBookings(bookings) {
+  bookings.forEach(function(booking) {
+      var room = booking.room;
+      var off = function() {
+        book(room, state.cards[0], function() {
+            shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
+            updateRoom(room);
+          }
+        );
+      };
+      var on = function() {
+        if(!room.hasOwnProperty("id")) {
+          var continuation = function(r) {
+            room = r;
+            unbook(room, state.cards[0], function() {
+                shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
                 updateRoom(room);
               }
             );
           }
-          var on = function() {
-            if(!room.hasOwnProperty("id")) {
-              var continuation = function(r) {
-                room = r;
-                unbook(room, state.cards[0], function() {
-                    shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
-                    updateRoom(room);
-                  }
-                );
-              }
-              loadRoom(room,continuation);
-            }
-            else
-              unbook(room, state.cards[0], function() {
-                  shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
-                  updateRoom(room);
-                }
-              );
-          }
+          loadRoom(room,continuation);
         }
-        else if(room.status == 1) {
-          var on = function() {
-            
-          }
-          var off = function() {
-            
-          }
-        }
-        else if(room.status == 2) {
-          var on = function() {
-            
-          }
-          var off = function() {
-            
-          }
-        }
-        addRoom(room, on, off);
-      });
-      var continuation = function(bookings) {
-        bookings.forEach(function(booking) {
-            var off = function() {
-              book(room, state.cards[0], function() {
-                  shell("Booking " + room.bokid + " @" + room.day + " #" + room.time);
-                  updateRoom(room);
-                }
-              );
+        else
+          unbook(room, state.cards[0], function() {
+              shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
+              updateRoom(room);
             }
-            var on = function() {
-              if(!room.hasOwnProperty("id")) {
-                var continuation = function(r) {
-                  room = r;
-                  unbook(room, state.cards[0], function() {
-                      shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
-                      updateRoom(room);
-                    }
-                  );
-                }
-                loadRoom(room,continuation);
-              }
-              else
-                unbook(room, state.cards[0], function() {
-                    shell("Unbooking " + room.bokid + ' @' + room.day + " #" + room.time);
-                    updateRoom(room);
-                  }
-                );
-            }
-            addBookedRoom(on, off);
-          }
-        );
-      }
-      loadBookings(state.cards, continuation);
+          );
+      };
+      addBookedRoom(room, on, off);
     }
-    loadRooms(continuation);
+  );
+}
+
+function displayCards(cards) {
+  $(cards).each(function(index, card) {
+    var on = function() {
+      cards.push(card);
+      shell("Registered card [" + card.number + "] (" + card.owner + ")");
+    }
+    var off = function() {
+      cards = $.grep(cards, function(c) {
+        card !== c;
+      });
+      shell("Unregistered card [" + card.number + "] (" + card.owner + ")");
+    }
+    addCard(card, on, off);
+  });
+}
+
+$(function() {
+  $("#stop").attr("disabled", "disabled");
+  $("#attack").click(function(event) {
+    shell("Starting attack");
+    attack();
+  });
+  $("#start").click(function(event) {
+    shell("Initializing");
+    loadCards(function(cards) {
+        displayCards(cards);
+        loadBookings(cards, displayBookings);
+      }
+    );
+    loadRooms(displayRooms);
   });
 });

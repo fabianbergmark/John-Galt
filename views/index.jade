@@ -76,80 +76,51 @@ block content
           strong
           p
         div.row-fluid
-          div.span5
-            table.table.table-condensed#rooms
-              thead
-                th rooms
-              tbody
-                tr
-                  td 1. Leibnitz
-                  td
-                    input(type="checkbox", value="Grp01")
-                tr
-                  td 2.Pascal
-                  td
-                    input(type="checkbox", value="Grp02")
-                tr
-                  td 3.Scheele
-                  td
-                    input(type="checkbox", value="Grp03")
-                tr
-                  td 4. Leopold
-                  td
-                    input(type="checkbox", value="Grp04")
-                tr
-                  td 5. Agricola
-                  td
-                    input(type="checkbox", value="Grp05")
-                tr
-                  td 6. Bernoulli
-                  td
-                    input(type="checkbox", value="Grp06")
-                tr
-                  td 7. Dürer
-                  td
-                    input(type="checkbox", value="Grp07")
-                tr
-                  td 8. Galvani
-                  td
-                    input(type="checkbox", value="Grp08")
-                tr
-                  td 9. Mikroskopet
-                  td
-                    input(type="checkbox", value="Grp09")
-                tr
-                  td 10. Teleskopet
-                  td
-                    input(type="checkbox", value="Grp10")
-                tr
-                  td 11. Watt
-                  td
-                    input(type="checkbox", value="Grp11")
-                tr
-                  td 12. Santorio
-                  td
-                    input(type="checkbox", value="Grp12")
-                tr
-                  td 13. N Galleriet
-                  td
-                    input(type="checkbox", value="Grp13")
-          div.span4.offset1
-            br
-            div.input-append.date#datepicker(data-date-format="mm/dd/yy", data-date="12-02-2012")
-              input(type="text", value="02-16-2012", readonly)#date
-              span.add-on
-                i.icon-calendar
-            br
-            div.input-append
-              select#time
-                option 08:00
-                option 10:00
-                option 12:00
-                option 13:00
-                option 15:00
-                option 17:00
-              span.add-on
-                i.icon-time
+          div.span1.offset1#backward
+            div.pull-left
+              &#8592;
+          div.span4.offset2
+            center
+              strong#date
+          div.span1.offset2#forward
+            div.pull-right
+              &#8594;
+        table.table.table-condensed.table-bordered#calendar
+          thead
+            th Rum
+            th 08:00
+            th 10:00
+            th 12:00
+            th 13:00
+            th 15:00
+            th 17:00
+          tbody
+            tr#Grp01
+              td 1. Leibnitz
+            tr#Grp02
+              td 2.Pascal
+            tr#Grp03
+              td 3.Scheele
+            tr#Grp04
+              td 4. Leopold
+            tr#Grp05
+              td 5. Agricola
+            tr#Grp06
+              td 6. Bernoulli
+            tr#Grp07
+              td 7. Dürer
+            tr#Grp08
+              td 8. Galvani
+            tr#Grp09
+              td 9. Mikroskopet
+            tr#Grp10
+              td 10. Teleskopet
+            tr#Grp11
+              td 11. Watt
+            tr#Grp12
+              td 12. Santorio
+            tr#Grp13
+              td 13. N Galleriet
       div.modal-footer
         div.btn#submit submit
-        div.btn(data-dismiss="modal", aria-hidden="true") close
+        div.btn(data-dismiss="modal", aria-hidden="true")#close close

@@ -1,5 +1,5 @@
 function check(on, off) {
-  var check = $("<td class='check'>✓</td>");
+  var check = $("<a href='#' class='check'>✓</td>");
   var c1 = function(event) {
     off();
     check.html('✘');
@@ -59,9 +59,9 @@ function addUnconfirmedRoom(room, on, off) {
 function addBookedRoom(room, on, off) {
   var row =  $("<tr></tr>");
   var room = $("<td>"
-              + room.day
+              + room.day.substr(5,5)
               + " - "
-              + room.time
+              + room.time.substr(0,5)
               + " @"
               + room.bokid
               + "</td>");
@@ -82,15 +82,103 @@ function addCard(card, on, off) {
   $("#lists #cards").append(row);
   return row;
 }
-  
-function status() {
-  var s = $("<tr><td></td></tr>");
-  $("#status").append(s);
-  return s;
+
+function Calendar(date) {
+  var cal = this;
+  this.rooms = [];
+  this.remove = function () { cal.reset(); };
+  this.reset = function() { cal.remove = cal.reset };
+  this.gc = function(room) {
+    var copy = this.remove;
+    this.remove = function() {
+      room();
+      copy();
+    }
+  }
+  this.clear = function() {
+    this.remove();
+    this.rooms = [];
+  }
 }
 
+Calendar.prototype.show = function(date) {
+  var cal = this;
+  cal.clear();
+  var data = {};
+  var calendar = $("#sheduleModal #calendar");
+  $("#sheduleModal #date").html(date.toDateString());
+    ["Grp01" ,"Grp02" ,"Grp03" ,"Grp04"
+    ,"Grp05" ,"Grp06"  ,"Grp07" ,"Grp08"
+    ,"Grp09" ,"Grp10" ,"Grp11" ,"Grp12"
+    ,"Grp13"].forEach(function(room) {
+        var row = calendar.find('#' + room);
+        ["08:00:00" ,"10:00:00"
+        ,"12:00:00" ,"13:00:00"
+        ,"15:00:00"
+        ,"17:00:00"].forEach(function(time) {
+          var col = $("<td class='room'></td>");
+          col.click(function(event) {
+              var day = date.toISOString().substr(0,10);
+              shedule(
+                { "day"  : day
+                , "time" : time
+                , "bokid": room 
+                }
+              , function() {
+                  shell("Sheduled #" + room + " @" + day + " " + time);
+                }
+              );
+            }
+          );
+          data[time] = data[time] ? data[time] : {};
+          data[time][room] = col;
+          row.append(col);
+          cal.gc(function() { col.remove(); });
+        }
+      );
+    }
+  );
+  loadRoomsDay(date, function(rooms) {
+      var calendar = $("#sheduleModal #calendar");
+      rooms.forEach(function(room) {
+          var col = data[room.time][room.bokid];
+          switch(room.status) {
+            case 0:
+              col.addClass("available");
+              break;
+            case 1:
+              col.addClass("unconfirmed");
+              break;
+            case 2:
+              col.addClass("booked");
+              break;
+          }
+        }
+      );
+    }
+  );
+}
+  
 $(function() {
-  $("#datepicker").datepicker();
+  $("#shedule #close").click(function() {
+    }
+  );
+  var date = new Date();
+  var calendar = new Calendar();
+  $("#sheduleModal #forward").click(function(event) {
+      date.setDate(date.getDate() + 1);
+      calendar.show(date);
+    }
+  );
+  $("#sheduleModal #backward").click(function(event) {
+      date.setDate(date.getDate() - 1);
+      calendar.show(date);
+    }
+  );
+  $("#shedule").click(function(event) {
+      calendar.show(date);
+    }
+  );
   $("#sheduleModal #error #close").click(function(event) {
       $(this).parent().hide();
     }

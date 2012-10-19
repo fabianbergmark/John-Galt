@@ -3,22 +3,23 @@
  * Module dependencies.
  */
 
-var express   = require('express')
-  , stylus    = require('stylus')
-  , routes    = require('./routes')
-  , auth      = require('./routes/auth')
-  , room      = require('./routes/room')
-  , rooms     = require('./routes/rooms')
-  , cards     = require('./routes/cards')
-  , cloud     = require('./routes/cloud')
-  , bookings  = require('./routes/bookings')
-  , measure   = require('./routes/measure')
-  , shedule   = require('./routes/shedule')
-  , websocket = require('./routes/websocket')
-  , http      = require('http')
-  , path      = require('path')
-  , nib       = require('nib')
-  , $         = require('jquery');
+var express    = require('express')
+  , stylus     = require('stylus')
+  , routes     = require('./routes')
+  , auth       = require('./routes/auth')
+  , room       = require('./routes/room')
+  , rooms      = require('./routes/rooms')
+  , cards      = require('./routes/cards')
+  , cloud      = require('./routes/cloud')
+  , bookings   = require('./routes/bookings')
+  , measure    = require('./routes/measure')
+  , bookkeeper = require('./routes/bookkeeper')
+  , shedule    = require('./routes/shedule')
+  , websocket  = require('./routes/websocket')
+  , http       = require('http')
+  , path       = require('path')
+  , nib        = require('nib')
+  , $          = require('jquery');
 
 function compile(str, path) {
   return stylus(str)
@@ -63,12 +64,14 @@ app.get('/', routes.index);
 app.get('/cards', authenticate, cards.list);
 app.get('/clouds', authenticate, cloud.clouds);
 app.get('/cloud:id', authenticate, cloud.cloud);
-app.get('/rooms', authenticate, rooms.list);
+app.get('/rooms', authenticate, rooms.get);
+app.get('/rooms/:day', authenticate, rooms.day);
 app.get('/room/:day/:time/:bokid', authenticate, room.get);
 app.get('/bookings/:card', authenticate, bookings.bookings);
-app.get('/measure/start', authenticate, measure.start);
-app.get('/measure/status', authenticate, measure.status);
-app.get('/measure/measurements', authenticate, measure.measurements);
+app.get('/measure/approximation', authenticate, measure.approximation);
+app.get('/measure/measurements', authenticate,measure.measurements);
+app.get('/bookkeeper', authenticate, bookkeeper.history);
+app.get('/bookkeeper/:card', authenticate, bookkeeper.card);
 app.get('/shedule', authenticate, shedule.list);
 app.post('/shedule/book', authenticate, shedule.shedule);
 app.get('/auth', auth.auth);
@@ -81,5 +84,4 @@ var http = http.createServer(app).listen(app.get('port')
   }
 );
 
-shedule.load();
 websocket.start(http);
