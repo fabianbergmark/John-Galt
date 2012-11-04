@@ -5,6 +5,9 @@ block content
     div.page-header
       center
         h1 John Galt
+      a(href="#modal", data-toggle="modal")
+        div#cloud
+          p 0
     br
     br
     div.row
@@ -47,3 +50,16 @@ block content
         table#booked.table.table-hover-table-condensed
           thead
             th Booked
+    div.modal.hide.fade#modal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+      div.modal-header
+        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
+        h3 Clouds
+      div.modal-body
+        ul
+        form.form-horizontal
+          div.control-group
+            label.control-label(for="name") Name
+            div.controls
+              input(type="text", name="name", placeholder="Name")
+      div.modal-footer
+        div.btn(data-dismiss="modal", aria-hidden="true") close
