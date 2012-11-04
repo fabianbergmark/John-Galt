@@ -1,0 +1,29 @@
+extends layout
+
+block content
+  h1 John Galt
+  button#check.btn.btn-large Check
+  br
+  br
+  select#room
+    option(value="Grp01") 1. Leibnitz: 6
+    option(value="Grp02") 2. Pascal 4
+    option(value="Grp03") 3. Scheele: 6
+    option(value="Grp04") 4. Leopold: 6
+    option(value="Grp05") 5. Agricola 6
+    option(value="Grp06") 6. Bernoulli: 6
+    option(value="Grp07") 7. Dürer: 6
+    option(value="Grp08") 8. Galvani: 6
+    option(value="Grp09") 9. Mikroskopet: 6
+    option(value="Grp10") 10. Teleskopet: 6
+    option(value="Grp11") 11. Watt: 6
+    option(value="Grp12") 12. Santorio: 6
+    option(value="Grp13") 13. N Galleriet: 5
+  br
+  select#time
+    option(period="1", startTime="08:00", stopTime="10:00") 08:00-10:00
+    option(period="2", startTime="10:00", stopTime="12:00") 10:00-12:00
+    option(period="3", startTime="12:00", stopTime="13:00") 12:00-13:00
+    option(period="4", startTime="13:00", stopTime="15:00") 13:00-15:00
+    option(period="5", startTime="15:00", stopTime="17:00") 15:00-17:00
+    option(period="6", startTime="17:00", stopTime="20:00") 17:00-20:00
