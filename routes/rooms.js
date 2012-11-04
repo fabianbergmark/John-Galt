@@ -7,9 +7,8 @@ var $     = require('jquery');
 var fetch = require('../fetch.js');
 
 exports.list = function(req, res) {
-  var cps = function(data) {
-    var response = 
-      { "rooms": [] };
+  function parseRooms(data) {
+    var rooms = [];
     $(data).find("td").each(function() {
       room = {};
       var link = $(this).children().first();
@@ -23,7 +22,13 @@ exports.list = function(req, res) {
         }
         else {
           room.status = 0;
+          var bokid = href.split(/bokid=/)[1];
+          if(bokid !== undefined) {
+            bokid = bokid.split(/&/)[0];
+            room.bokid = bokid;
+          }
         }
+        
         var day = href.split(/bokdag=/)[1];
         if(day !== undefined) {
           day = day.split(/&/)[0];
@@ -38,10 +43,33 @@ exports.list = function(req, res) {
         }
         else
           return;
-        response.rooms.push(room);
+        rooms.push(room);
       }
     });
-    res.end(JSON.stringify(response));
+    return rooms;
   }
-  fetch.fetch(cps);
+  
+  var today = new Date();
+  
+  function next(date,list) {
+    if(date.getDate() - today.getDate() > 6) {
+      var rooms =
+        { "rooms": list };
+      res.end(JSON.stringify(rooms));
+    }
+    else {
+      var cps = function(data) {
+        var rooms = parseRooms(data);
+        list = list.concat(rooms);
+        t = new Date(date.getTime());
+        t.setDate(t.getDate() + 1);
+        next(t,list);
+      }
+      var url = "http://www.kth.se/kthb/2.33341/gruppschema/bokning_po.asp?bokdag="
+              + date.toISOString().substr(0,10);
+      fetch.fetch(url, cps);
+    }
+  }
+  
+  next(today,[]);
 };
