@@ -4,6 +4,14 @@ $(function() {
     $("#console").append('<p>John Galt:~ $ ' + line + '</p>');
   }
   
+  function nbsp(n) {
+    var ret = "";
+    for(i = 0; i < n; i++) {
+      ret += "&nbsp;";
+    }
+    return ret;
+  }
+  
   function time2period(time) {
     switch(time) {
       case "08:00:00":
@@ -134,9 +142,9 @@ $(function() {
               status.booked += 1;
           });
           shell("Status: ↴<br />"
-               +"· · · · · · · · · · · available (" + status.available     + ")<br />"
-               +"· · · · · · · · · · · unconfirmed (" + status.unconfirmed + ")<br />"
-               +"· · · · · · · · · · · booked      (" + status.booked      + ")");
+               +nbsp(16)+"available (" + status.available     + ")<br />"
+               +nbsp(16)+"unconfirmed (" + status.unconfirmed + ")<br />"
+               +nbsp(16)+"booked (" + status.booked      + ")");
         }
       , "error"    : function(request, error, code) {
           console.log(error);
