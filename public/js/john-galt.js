@@ -62,11 +62,12 @@ function bruteforce(card, room, continuation) {
       switch(room.status) {
         case 2:
           continuation(room);
+          return;
         case 1:
           var barrier = new Barrier();
           shell("Attacking target " + room.bokid + " @" + room.day + " #" + room.time);
           setTimeout(function() {
-          loop(room, barrier, function() { });
+              loop(room, barrier, function() { });
             }
             , 10
           );
