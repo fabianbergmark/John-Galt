@@ -12,7 +12,7 @@ function attacker(continuation) {
         loadBookkeepingCard(card, function(history) {
             for(var i = 0; i < history.length; i++) {
               var booking = history[i];
-              var time = new Date(booking.day + " " + booking.time);
+              var time = new Date(booking.room.time);
               if(time.getTime() > today.getTime()) {
                 usable = false;
                 break;
@@ -39,7 +39,7 @@ function attacker(continuation) {
         if(i >= cards.length) {
           if(available.length > 0) {
             available.sort(function(c1, c2) {
-                return c1.charges - c2.charges;
+                return c2.charges - c1.charges;
               }
             );
             var card = available[0].card;
