@@ -15,7 +15,7 @@ function run(command) {
   eval(command);
 }
 
-$(document).ready(function() {
+$(function() {
   $(document).keydown(function(event) {
     var key = event.which;
     switch(key) {

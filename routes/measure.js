@@ -43,7 +43,7 @@ function nextPeriod() {
       }
     });
     if(!found) {
-      var next = 32 * 60 * 60 * 1000 - now;
+      var next = 30 * 60 * 60 * 1000 - now;
       console.log("Sleeping " + next / 1000 + " seconds until next period.");
       setTimeout(function() {
           start(
