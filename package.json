@@ -7,11 +7,16 @@
   "dependencies": {
     "express": "~3.0.0rc4",
     "jade": "~0.27.5",
-    "mysql": "~0.9.6",
     "nib": "~0.8.2",
     "stylus": "~0.29.0",
     "websocket": "~1.0.7",
-    "jquery": "~1.7.3"
+    "jquery": "~1.7.3",
+    "sqlite3": "~2.1.17",
+    "crypto": "0.0.3",
+    "q": "~0.9.7",
+    "xpath": "0.0.5",
+    "xmldom": "~0.1.16",
+    "jsdom": "~0.8.6"
   },
   "devDependencies": {},
   "scripts": {
@@ -19,8 +24,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dflemstr/john-galt.git"
+    "url": "https://github.com/fabianbergmark/john-galt.git"
   },
-  "author": "Fabian Bergmark & David Flemström",
+  "author": "Fabian Bergmark",
   "license": "BSD"
 }

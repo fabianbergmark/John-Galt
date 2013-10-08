@@ -3,78 +3,18 @@ extends layout
 block content
   div.container
     div.page-header
-      center
-        h1 John Galt
+      div#admin_dropdown.dropdown
+        a.dropdown-toggle(href="#", data-toggle="dropdown") Admin
+        ul.dropdown-menu(role="menu", aria-labelledby="dLabel")
+          li(role="presentation")
+            a#user_create(href="#adminModal", role="menuitem", data-toggle="modal") Create user
+            
       a(href="#cloudModal", data-toggle="modal")
         div#cloud
           p 0
     br
-    br
-    div.row
-      div.span3
-        button#start.btn.btn-large.btn-block.btn-success Start
-      div.span3
-        button#stop.btn.btn-large.btn-block.btn-danger Stop
-      div.span3
-        button#attack.btn.btn-large.btn-block.btn-inverse Attack
-      div.span3
-        a(href="#sheduleModal", data-toggle="modal")
-          button#shedule.btn.btn-large.btn-block.btn-primary Shedule
-    br
     div.row
       div.span12
-        div#console.well
-          div.row-fluid
-            div.span10
-              div#text
-              div.row-fluid#commandline
-                div.span12
-                  div.input-prepend
-                    span.add-on $>
-                    input(type='text')#line
-            div.span2
-              table#status.table
-                thead
-                  th Status
-    div.row#lists
-      div.span2
-        table#cards.table.table-hover.table-condensed
-          thead
-            th Cards
-      div.span3
-        table#rooms.table.table-hover.table-condensed
-          thead
-            th Rooms
-      div.span3
-        table#yellow.table.table-hover.table-condensed
-          thead
-            th Unconfirmed
-      div.span3
-        table#booked.table.table-hover-table-condensed
-          thead
-            th Booked
-    div.modal.hide.fade#cloudModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
-      div.modal-header
-        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
-        h3 Clouds
-      div.modal-body
-        ul
-        form.form-horizontal
-          div.control-group
-            label.control-label(for="name") Name
-            div.controls
-              input(type="text", name="name", placeholder="Name")
-      div.modal-footer
-        div.btn(data-dismiss="modal", aria-hidden="true") close
-    div.modal.hide.fade#sheduleModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
-      div.modal-header
-        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
-        h3 Shedule booking
-      div.modal-body
-        div.alert.alert-error.hide#error
-          button.close(type="button")#close&times;
-          strong
-          p
         div.row-fluid
           div.span1.offset1#backward
             div.pull-left
@@ -121,6 +61,73 @@ block content
               td 12. Santorio
             tr#Grp13
               td 13. N Galleriet
+    div.modal.hide.fade#cloudModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+      div.modal-header
+        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
+        h3 Clouds
+      div.modal-body
+        ul
+        form.form-horizontal
+          div.control-group
+            label.control-label(for="name") Name
+            div.controls
+              input(type="text", name="name", placeholder="Name")
+      div.modal-footer
+        div.btn(data-dismiss="modal", aria-hidden="true") close
+    div.modal.hide.fade#adminModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+      div.modal-header
+        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
+        h3 Admin
+      div.modal-body
+        ul.nav.nav-tabs
+          li.active
+            a(href="#admin_users", data-toggle="tab") Users
+          li
+            a(href="#admin_cards", data-toggle="tab") Cards
+        div.tab-content
+          div#admin_users.tab-pane.active
+            form(action="/admin/user/add", method="POST").form-horizontal
+              div.control-group
+                label.control-label(for="username") Username
+                div.controls
+                  input(type="text", name="username", placeholder="Username")
+              div.control-group
+                label.control-label(for="email") Email
+                div.controls
+                  input(type="email", name="email", placeholder="e-mail")
+              div.control-group
+                label.control-label(for="password") Password
+                div.controls
+                  input(type="password", name="password", placeholder="Password")
+              div.control-group
+                div.controls
+                  button(type="submit").btn.btn-primary Add
+          div#admin_cards.tab-pane
+            form(action="/admin/card/add", method="POST").form-horizontal
+              div.control-group
+                label.control-label(for="owner") Owner
+                div.controls
+                  input(type="text", name="owner", placeholder="Owner")
+              div.control-group
+                label.control-label(for="number") Number
+                div.controls
+                  input(type="text", name="number", placeholder="Number")
+              div.control-group
+                div.controls
+                  button(type="submit").btn.btn-primary Add
+      div.modal-footer
+        div.btn(data-dismiss="modal", aria-hidden="true") close
+    div.modal.hide.fade#sheduleModal(role="dialog", tabindex="-1", role="dialog", aria-hidden="true")
+      div.modal-header
+        button(type="button", class="close", data-dismiss="modal", aria-hidden="true")&times;
+        h3 Shedule booking
+      div.modal-body
+        div.alert.alert-error.hide#error
+          button.close(type="button")#close&times;
+          strong
+          p
+        
+
       div.modal-footer
         div.btn#submit submit
         div.btn(data-dismiss="modal", aria-hidden="true")#close close

@@ -1,11 +1,12 @@
-
 /*
  * GET home page.
  */
 
-exports.index = function(req, res){
-  if (!req.session.user_id)
-    res.redirect('/auth');
-  else
+module.exports = function(settings, db) {
+
+  exports.index = function(req, res){
     res.render('index', { title: 'John Galt' });
-};
+  };
+
+  return exports;
+}

@@ -1,21 +1,31 @@
-
 /**
  * Module dependencies.
  */
 
+var fs = require('fs')
+  , sqlite3    = require('sqlite3')
+  , settings   = require('./settings');
+
+var exists = fs.existsSync(settings.sqlite3.file);
+
+var db = new sqlite3.Database(settings.sqlite3.file)
+
+var migrate        = require('./migrate')(settings, db, exists)
+  , authentication = require('./authentication')(settings, db);
+
+
 var express    = require('express')
   , stylus     = require('stylus')
-  , routes     = require('./routes')
-  , auth       = require('./routes/auth')
-  , room       = require('./routes/room')
-  , rooms      = require('./routes/rooms')
-  , cards      = require('./routes/cards')
-  , cloud      = require('./routes/cloud')
-  , bookings   = require('./routes/bookings')
-  , measure    = require('./routes/measure')
-  , bookkeeper = require('./routes/bookkeeper')
-  , shedule    = require('./routes/shedule')
-  , websocket  = require('./routes/websocket')
+  , routes     = require('./routes')(settings, db)
+  , admin      = require('./routes/admin')(settings, db)
+  , auth       = require('./routes/auth')(settings, db, authentication)
+  , room       = require('./routes/room')(settings, db)
+  , card       = require('./routes/card')(settings, db)
+  , booking    = require('./routes/booking')(settings, db, card)
+  , cloud      = require('./routes/cloud')(settings, db)
+  , measure    = require('./routes/measure')(settings, db)
+  , shedule    = require('./routes/shedule')(settings, db, card, booking)
+  , websocket  = require('./routes/websocket')(settings, db)
   , http       = require('http')
   , path       = require('path')
   , nib        = require('nib')
@@ -49,31 +59,40 @@ app.configure('development', function(){
 });
 
 function authenticate(req, res, next) {
-  if (!req.session.user_id) {
+  if (!authentication.authenticated(req.session)) {
     res.send(
-      { "status": false
-      , "error" : "unauthorized"
-      }
-    );
-  } else {
+      { "status": false,
+        "error" : "unauthorized" });
+    res.redirect('/auth');
+  } else
     next();
-  }
 }
 
-app.get('/', routes.index);
-app.get('/cards', authenticate, cards.list);
+function authenticate_admin(req, res, next) {
+  if (!authentication.admin(req.session)) {
+    res.send(
+      { "status": false,
+        "error": "unauthorized" });
+    res.redirect('/auth');
+  } else
+    next();
+}
+
+app.get('/', authenticate, routes.index);
+app.post('/admin/user/add', admin.user.add);
+app.post('/admin/card/add', admin.card.add);
+app.get('/card', authenticate, card.get);
 app.get('/clouds', authenticate, cloud.clouds);
-app.get('/cloud:id', authenticate, cloud.cloud);
-app.get('/rooms', authenticate, rooms.get);
-app.get('/rooms/:day', authenticate, rooms.day);
-app.get('/room/:day/:time/:bokid', authenticate, room.get);
-app.get('/bookings/:card', authenticate, bookings.bookings);
+app.get('/cloud/:id', authenticate, cloud.cloud);
+app.get('/room/:day?/:period?/:bokid?', authenticate, room.get);
 app.get('/measure/approximation', authenticate, measure.approximation);
 app.get('/measure/measurements', authenticate,measure.measurements);
-app.get('/bookkeeper', authenticate, bookkeeper.history);
-app.get('/bookkeeper/:card', authenticate, bookkeeper.card);
-app.get('/shedule', authenticate, shedule.list);
-app.post('/shedule/book', authenticate, shedule.shedule);
+app.get('/booking', authenticate, booking.get);
+app.get('/booking/:card', authenticate, booking.card);
+app.get('/shedule', authenticate, shedule.get);
+app.post('/shedule/book', authenticate, shedule.book);
+app.post('/shedule/unbook', authenticate, shedule.unbook);
+app.post('/shedule/confirm', authenticate, shedule.confirm);
 app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);

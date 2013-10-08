@@ -1,10 +1,9 @@
-
 /*
  * Settings, password, etc.
  */
- 
-exports.mysql = 
-  { "host"    : "192.168.7.104"
-  , "user"    : "johngalt"
-  , "database": "johngalt"
-  , "password": "ogh5%rgt" };
+
+exports.sqlite3 =
+  { "file": "john-galt.db" };
+
+exports.constants =
+  { "booking": { "time_limit": 6 } };

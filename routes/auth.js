@@ -1,23 +1,48 @@
-
 /*
  * Authentication handlers.
  */
- 
-exports.auth = function (req, res) {
-  res.render('auth', { title: 'Who am I' });
-}
 
-exports.login = function (req, res) {
-  var post = req.body;
-  if (post.user == 'atlas' && post.pass == 'atlas') {
-    req.session.user_id = post.user
-    res.redirect('/');
-  } else {
-    res.redirect('/auth/auth');
+var crypto = require('crypto');
+
+module.exports = function (settings, db, authentication) {
+
+  function auth(eq, res) {
+    res.render('auth',
+               { title: 'Who am I' });
   }
-};
 
-exports.logout = function (req, res) {
-  delete req.session.user_id;
-  res.redirect('/');
-};
+  exports.auth = auth;
+
+  function login(req, res) {
+    var post = req.body;
+    var username = post.user;
+    var password = post.pass;
+
+    authentication.login(
+      username,
+      password,
+      req.session,
+      function(success) {
+        if (success) {
+          res.send(
+            { "status": false });
+          res.redirect('/');
+        } else {
+          res.send(
+            { "status": false });
+          res.redirect('/auth');
+        }
+      });
+  }
+
+  exports.login = login;
+
+  function logout(req, res) {
+    auth.logout(req.session);
+    res.redirect('/auth');
+  };
+
+  exports.logout = logout;
+
+  return exports;
+}
