@@ -22,10 +22,7 @@ var express    = require('express')
   , room       = require('./routes/room')(settings, db)
   , card       = require('./routes/card')(settings, db)
   , booking    = require('./routes/booking')(settings, db, card)
-  , cloud      = require('./routes/cloud')(settings, db)
-  , measure    = require('./routes/measure')(settings, db)
   , shedule    = require('./routes/shedule')(settings, db, card, booking)
-  , websocket  = require('./routes/websocket')(settings, db)
   , http       = require('http')
   , path       = require('path')
   , nib        = require('nib')
@@ -82,11 +79,7 @@ app.get('/', authenticate, routes.index);
 app.post('/admin/user/add', admin.user.add);
 app.post('/admin/card/add', admin.card.add);
 app.get('/card', authenticate, card.get);
-app.get('/clouds', authenticate, cloud.clouds);
-app.get('/cloud/:id', authenticate, cloud.cloud);
 app.get('/room/:day?/:period?/:bokid?', authenticate, room.get);
-app.get('/measure/approximation', authenticate, measure.approximation);
-app.get('/measure/measurements', authenticate,measure.measurements);
 app.get('/booking', authenticate, booking.get);
 app.get('/booking/:card', authenticate, booking.card);
 app.get('/shedule', authenticate, shedule.get);
@@ -97,10 +90,6 @@ app.get('/auth', auth.auth);
 app.post('/auth/login', auth.login);
 app.get('/auth/logout', auth.logout);
 
-var http = http.createServer(app).listen(app.get('port')
-  , function() {
-    console.log("Express server listening on port " + app.get('port'));
-  }
-);
-
-websocket.start(http);
+var http = http.createServer(app).listen(app.get('port'), function() {
+  console.log("Express server listening on port " + app.get('port'));
+});
