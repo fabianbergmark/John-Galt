@@ -53,16 +53,7 @@ function Calendar(calendar) {
          var td = $('<td class="room"></td>');
 
          var elem =
-           { "td"       : td,
-             "room"     : {},
-             "shedule"  : [],
-             "sheduled": function(room) {
-               return elem.shedule.some(function(event) {
-                 return (room.bokid == event.room.bokid &&
-                         room.day   == event.day &&
-                         room.time  == event.time);
-               });
-             } };
+           { "td" : td };
 
          function theme() {
            var c;
@@ -77,7 +68,7 @@ function Calendar(calendar) {
            td.css("background-color", c);
 
            var border = "";
-           if (room.sheduled)
+           if (room.shedule.sheduled)
              border = "2px solid black";
            td.css("border", border);
 
@@ -114,13 +105,6 @@ function Calendar(calendar) {
        });
    });
 
-  API.shedule.get(function(shedule) {
-    shedule.forEach(function(event) {
-      var room = calendar.rooms[event.room.bokid][event.time];
-      room.shedule.push(event);
-    });
-  })
-
   this.show(this.date, function() {});
 }
 
@@ -134,7 +118,7 @@ Calendar.prototype.show = function(date) {
   day.setHours(day.getHours() + 2);
   day = day.toISOString().substring(0, 10);
 
-  API.rooms.get(day, undefined, undefined, function(rooms) {
+  API.core.room(day, undefined, undefined, function(rooms) {
 
     calendar.dom.date.html(calendar.date.toDateString());
 
@@ -151,8 +135,6 @@ Calendar.prototype.show = function(date) {
 
     rooms.forEach(function(room) {
       var elem = calendar.rooms[room.bokid][room.time];
-      var sheduled = elem.sheduled(room);
-      room.sheduled = sheduled;
       elem.room = room;
 
       var color = room.status == 0
@@ -166,7 +148,7 @@ Calendar.prototype.show = function(date) {
       elem.td.css("background-color", color);
 
       var border = "";
-      if (room.sheduled)
+      if (room.shedule.sheduled)
         var border = "2px solid black";
       elem.td.css("border", border);
 

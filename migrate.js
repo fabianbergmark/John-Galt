@@ -2,8 +2,6 @@
  * Migrate database tables.
  */
 
-
-
 module.exports = function(settings, db, exists) {
 
   if (!exists) {
@@ -43,7 +41,7 @@ module.exports = function(settings, db, exists) {
            , room_id INTEGER NOT NULL REFERENCES room (id) ON DELETE CASCADE\
            , day VARCHAR(16) NOT NULL\
            , time VARCHAR(16) NOT NULL\
-           , UNIQUE (card_id, room_id, day, time))");
+           , UNIQUE (card_id, room_id, day, time) )");
         db.run(
           "CREATE TABLE measurement\
            ( beforeTime DATETIME NOT NULL\
@@ -51,10 +49,9 @@ module.exports = function(settings, db, exists) {
         db.run(
           "CREATE TABLE shedule\
            ( room_id INTEGER NOT NULL REFERENCES room (id) ON DELETE CASCADE\
-           , action VARCHAR(16) NOT NULL\
            , day VARCHAR(16) NOT NULL\
            , time VARCHAR(16) NOT NULL\
-           , UNIQUE (room_id, day, time))");
+           , UNIQUE (room_id, day, time) )");
 
         [{ "name" : "1. Leibnitz",
            "bokid": "Grp01",

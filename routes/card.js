@@ -24,10 +24,10 @@ module.exports = function(settings, db, done) {
 
   load(function(rows) { cards = rows; });
 
-  exports.get = function(req, res) {
+  exports.get_list = function(req, res) {
     res.send(
       { "status": true,
-        "result": exports.cards });
+        "result": cards });
   }
 
   return exports;

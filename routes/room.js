@@ -6,7 +6,7 @@ var helper = { "room": require('./helpers/kth/room.js') };
 
 module.exports = function(settings, db) {
 
-  exports.get = function(req, res) {
+  exports.get_list = function(req, res) {
 
     var day    = req.params.day;
     var bokid  = req.params.bokid;

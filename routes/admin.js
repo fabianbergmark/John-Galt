@@ -8,7 +8,7 @@ module.exports = function(settings, db) {
 
   exports.user = {};
 
-  exports.user.add = function(req, res) {
+  exports.user.post_add = function(req, res) {
 
     var username = req.body.username;
     var password = req.body.password;
@@ -60,9 +60,9 @@ module.exports = function(settings, db) {
 
   exports.card = {};
 
-  exports.card.add = function(req, res) {
+  exports.card.post_add = function(req, res) {
 
-    var owner   = req.body.owner;
+    var owner  = req.body.owner;
     var number = req.body.number;
 
     db.run(

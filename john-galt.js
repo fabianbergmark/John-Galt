@@ -13,7 +13,6 @@ var db = new sqlite3.Database(settings.sqlite3.file)
 var migrate        = require('./migrate')(settings, db, exists)
   , authentication = require('./authentication')(settings, db);
 
-
 var express    = require('express')
   , stylus     = require('stylus')
   , routes     = require('./routes')(settings, db)
@@ -21,8 +20,9 @@ var express    = require('express')
   , auth       = require('./routes/auth')(settings, db, authentication)
   , room       = require('./routes/room')(settings, db)
   , card       = require('./routes/card')(settings, db)
-  , booking    = require('./routes/booking')(settings, db, card)
-  , shedule    = require('./routes/shedule')(settings, db, card, booking)
+  , book       = require('./routes/book')(settings, db, card)
+  , shedule    = require('./routes/shedule')(settings, db, book)
+  , john_galt  = require('./routes/john-galt')(settings, db, shedule, book)
   , http       = require('http')
   , path       = require('path')
   , nib        = require('nib')
@@ -36,7 +36,7 @@ function compile(str, path) {
 
 var app = express();
 
-app.configure(function(){
+app.configure(function() {
   app.set('port', process.env.PORT || 3002);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -51,7 +51,7 @@ app.configure(function(){
   app.use(express.static(path.join(__dirname, 'public')));
 });
 
-app.configure('development', function(){
+app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
@@ -75,20 +75,24 @@ function authenticate_admin(req, res, next) {
     next();
 }
 
-app.get('/', authenticate, routes.index);
-app.post('/admin/user/add', admin.user.add);
-app.post('/admin/card/add', admin.card.add);
-app.get('/card', authenticate, card.get);
-app.get('/room/:day?/:period?/:bokid?', authenticate, room.get);
-app.get('/booking', authenticate, booking.get);
-app.get('/booking/:card', authenticate, booking.card);
-app.get('/shedule', authenticate, shedule.get);
-app.post('/shedule/book', authenticate, shedule.book);
-app.post('/shedule/unbook', authenticate, shedule.unbook);
-app.post('/shedule/confirm', authenticate, shedule.confirm);
-app.get('/auth', auth.auth);
-app.post('/auth/login', auth.login);
-app.get('/auth/logout', auth.logout);
+app.get ('/', authenticate, routes.index);
+app.post('/admin/user/add', admin.user.post_add);
+app.post('/admin/card/add', admin.card.post_add);
+app.get ('/auth', auth.get_auth);
+app.post('/auth/login', auth.post_login);
+app.get ('/auth/logout', auth.get_logout);
+app.post('/api/core/book', authenticate, john_galt.post_book);
+app.post('/api/core/unbook', authenticate, john_galt.post_unbook);
+app.get ('/api/core/room/:day?/:period?/:bokid?', authenticate, john_galt.get_room_list);
+app.get('/api/module/card', authenticate, card.get_list);
+
+app.get ('/api/module/book/list/:card?', authenticate, book.get_list);
+app.post('/api/module/book/book', authenticate, book.post_book);
+app.post('/api/module/book/unbook', authenticate, book.post_unbook);
+app.get ('/api/module/shedule/list', authenticate, shedule.get_list);
+app.post('/api/module/shedule/book', authenticate, shedule.post_book);
+app.post('/api/module/shedule/unbook', authenticate, shedule.post_unbook);
+app.get ('/api/module/room/list/:day?/:period?/:bokid?', authenticate, room.get_list);
 
 var http = http.createServer(app).listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));

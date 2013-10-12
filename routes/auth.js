@@ -6,14 +6,12 @@ var crypto = require('crypto');
 
 module.exports = function (settings, db, authentication) {
 
-  function auth(eq, res) {
-    res.render('auth',
-               { title: 'Who am I' });
-  }
+  exports.get_auth = function(eq, res) {
+    res.render('auth', { title: 'Who am I' });
+  };
 
-  exports.auth = auth;
+  exports.post_login = function(req, res) {
 
-  function login(req, res) {
     var post = req.body;
     var username = post.user;
     var password = post.pass;
@@ -35,14 +33,10 @@ module.exports = function (settings, db, authentication) {
       });
   }
 
-  exports.login = login;
-
-  function logout(req, res) {
+  exports.get_logout = function(req, res) {
     auth.logout(req.session);
     res.redirect('/auth');
   };
-
-  exports.logout = logout;
 
   return exports;
 }
