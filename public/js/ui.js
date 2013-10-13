@@ -1,7 +1,6 @@
 function Calendar(calendar) {
 
   this.dom = {};
-  this.date = new Date();
 
   this.color =
     { "red"   : "#CF7878",
@@ -15,18 +14,33 @@ function Calendar(calendar) {
   this.dom.forward  = $("#forward");
   this.dom.backward = $("#backward");
 
+  if (this.dom.calendar.data("day"))
+    this.date = new Date(this.dom.calendar.data("day"));
+  else
+    this.date = new Date();
+
   calendar = this;
 
   this.dom.forward.click(
     function(event) {
-      calendar.date.setDate(calendar.date.getDate() + 1);
-      calendar.show(calendar.date);
+      var date = new Date(calendar.date);
+      date.setDate(date.getDate() + 1);
+      calendar.show(date, function() {
+        date.setHours(date.getHours() + 2);
+        var day  = date.toISOString().substring(0, 10);
+        history.pushState({ "date": date }, null, day);
+      });
     });
 
   this.dom.backward.click(
     function(event) {
-      calendar.date.setDate(calendar.date.getDate() - 1);
-      calendar.show(calendar.date);
+      var date = new Date(calendar.date);
+      date.setDate(date.getDate() - 1);
+      calendar.show(date, function() {
+        date.setHours(date.getHours() + 2);
+        var day = date.toISOString().substring(0, 10);
+        history.pushState({ "date": date }, null, day);
+      });
     });
 
   this.rooms = {};
@@ -108,7 +122,7 @@ function Calendar(calendar) {
   this.show(this.date, function() {});
 }
 
-Calendar.prototype.show = function(date) {
+Calendar.prototype.show = function(date, continuation) {
 
   this.date = date;
 
@@ -157,6 +171,7 @@ Calendar.prototype.show = function(date) {
         owner = room.owner;
       elem.td.html(owner);
     });
+    continuation();
   });
 }
 
@@ -170,4 +185,11 @@ $(function() {
     });
 
   var calendar = new Calendar($("#calendar"));
+  window.addEventListener("popstate", function(event) {
+    var state = event.state;
+    console.log(state);
+    if (state)
+      calendar.show(state.date, function() {});
+  });
+
 });

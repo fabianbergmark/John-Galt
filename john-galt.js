@@ -75,10 +75,9 @@ function authenticate_admin(req, res, next) {
     next();
 }
 
-app.get ('/', authenticate, routes.index);
+app.get ('/auth', auth.get_auth);
 app.post('/admin/user/add', admin.user.post_add);
 app.post('/admin/card/add', admin.card.post_add);
-app.get ('/auth', auth.get_auth);
 app.post('/auth/login', auth.post_login);
 app.get ('/auth/logout', auth.get_logout);
 app.post('/api/core/book', authenticate, john_galt.post_book);
@@ -93,6 +92,7 @@ app.get ('/api/module/shedule/list', authenticate, shedule.get_list);
 app.post('/api/module/shedule/book', authenticate, shedule.post_book);
 app.post('/api/module/shedule/unbook', authenticate, shedule.post_unbook);
 app.get ('/api/module/room/list/:day?/:period?/:bokid?', authenticate, room.get_list);
+app.get ('/:day?', authenticate, routes.index);
 
 var http = http.createServer(app).listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));

@@ -83,7 +83,6 @@ module.exports = function(settings, db, cards) {
     var week_limit = settings.constants.book.time_limit * day_limit;
 
     var target = new Date(day + " " + time);
-    console.log(day + " " + time);
 
     var card_credits = [];
 
@@ -92,9 +91,8 @@ module.exports = function(settings, db, cards) {
       history.forEach(function(booking) {
         if (card.number == booking.card.number) {
           var at = new Date(booking.room.day + " " + booking.room.time);
-          console.log(at.toString());
           var diff = target.getTime() - at.getTime();
-          console.log(diff);
+
           if (diff <= day_limit/2)
             credit = 0;
           else if (diff < week_limit)
