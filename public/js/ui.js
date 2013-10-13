@@ -187,7 +187,6 @@ $(function() {
   var calendar = new Calendar($("#calendar"));
   window.addEventListener("popstate", function(event) {
     var state = event.state;
-    console.log(state);
     if (state)
       calendar.show(state.date, function() {});
   });
