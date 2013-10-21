@@ -129,12 +129,15 @@ Calendar.prototype.show = function(date, continuation) {
   var calendar = this;
 
   var day = new Date(date);
-  day.setHours(day.getHours() + 2);
-  day = day.toISOString().substring(0, 10);
+  day = day.toLocaleDateString();
 
-  API.core.room(day, undefined, undefined, function(rooms) {
+  API.core.room(day, null, null, function(rooms) {
 
-    calendar.dom.date.html(calendar.date.toDateString());
+    API.modules.book.credits(day, null, function(credits) {
+      var title = calendar.date.toDateString();
+      title += " Credits: " + credits.total;
+      calendar.dom.date.html(title);
+    });
 
     for (var bokid in calendar.rooms) {
       var room = calendar.rooms[bokid];
