@@ -35,8 +35,6 @@ module.exports = function(settings, db) {
           else {
             user_id = this.lastID;
 
-            console.log("pass: " + user_id + " " + salted + " " + hash);
-
             db.run(
               "INSERT INTO auth_password\
                ( user_id\
