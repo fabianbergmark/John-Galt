@@ -10,6 +10,9 @@ module.exports = function(settings, db) {
 
     db.get(
       "SELECT user.id AS user_id\
+            , user.name\
+            , user.email\
+            , user.date\
             , auth_password.password\
             , auth_password.salt\
             , COUNT(admin.user_id) AS admin\
@@ -32,7 +35,13 @@ module.exports = function(settings, db) {
           var provided = crypto.createHash('sha1').update(salted).digest('hex');
 
           if (provided == correct) {
-            session.user_id = user_id;
+
+            var user = { "id"   : row.user_id,
+                         "name" : row.name,
+                         "email": row.email,
+                         "date" : row.date };
+            session.user = user;
+
             if (admin)
               session.admin = 1;
             continuation(true);
@@ -45,14 +54,15 @@ module.exports = function(settings, db) {
   exports.login = login;
 
   function logout(session) {
-    delete session.user_id;
+    delete session.user;
     delete session.admin;
   }
 
   exports.logout = logout;
 
   function authenticated(session) {
-    return session.user_id !== undefined;
+    return session.user !== undefined &&
+      session.user.id !== undefined;
   }
 
   exports.authenticated = authenticated;
