@@ -8,7 +8,8 @@ var fs = require('fs')
 
 var exists = fs.existsSync(settings.sqlite3.file);
 
-var db = new sqlite3.Database(settings.sqlite3.file)
+var db = new sqlite3.Database(settings.sqlite3.file);
+db.run("PRAGMA foreign_keys = ON");
 
 var migrate        = require('./migrate')(settings, db, exists)
   , authentication = require('./authentication')(settings, db);
