@@ -80,6 +80,52 @@ var API =
                   throw data.error;
               }
             });
+        },
+        "book":
+        function(day, time, bokid, continuation) {
+          $.ajax(
+            { "type"    : "POST",
+              "dataType": "json",
+              "url"     : "/api/module/book/book/"
+              + day + "/" + time + "/" + bokid,
+              "success" : function(data) {
+                if(data.status)
+                  continuation(data.result);
+                else
+                  throw data.error;
+              }
+            });
+        },
+        "unbook":
+        function(day, time, bokid, continuation) {
+          $.ajax(
+            { "type"    : "POST",
+              "dataType": "json",
+              "url"     : "/api/module/book/unbook/"
+              + day + "/" + time + "/" + bokid,
+              "success" : function(data) {
+                if(data.status)
+                  continuation(data.result);
+                else
+                  throw data.error;
+              }
+            });
+        },
+        "credits":
+        function(day, card_number, continuation) {
+          $.ajax(
+            { "type": "GET",
+              "dataType": "json",
+              "url": "/api/module/book/credits"
+              + (day ? "/" + day: "")
+              + (card_number ? "/" + card_number: ""),
+              "success": function(data) {
+                if (data.status)
+                  continuation(data.result);
+                else
+                  throw data.error;
+              }
+            });
         } },
       "card":
       { "get":
