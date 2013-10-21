@@ -87,8 +87,10 @@ app.get ('/api/core/room/:day?/:period?/:bokid?', authenticate, john_galt.get_ro
 app.get('/api/module/card', authenticate, card.get_list);
 
 app.get ('/api/module/book/list/:card?', authenticate, book.get_list);
+app.get ('/api/module/book/credits/:day?/:card?', authenticate, book.get_credits);
 app.post('/api/module/book/book', authenticate, book.post_book);
 app.post('/api/module/book/unbook', authenticate, book.post_unbook);
+
 app.get ('/api/module/shedule/list', authenticate, shedule.get_list);
 app.post('/api/module/shedule/book', authenticate, shedule.post_book);
 app.post('/api/module/shedule/unbook', authenticate, shedule.post_unbook);
