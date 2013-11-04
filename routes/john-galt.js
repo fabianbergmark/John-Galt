@@ -8,6 +8,8 @@ module.exports = function(settings, db, shedule, booking) {
 
   exports.post_book = function(req, res) {
 
+    var user = req.session.user;
+
     var post  = req.body;
     var day   = post.day;
     var time  = post.time;
@@ -18,13 +20,15 @@ module.exports = function(settings, db, shedule, booking) {
         "time" : time,
         "bokid": bokid };
 
-    shedule.book(room, function(success) {
+    shedule.book(room, user, function(success) {
       res.send({ "status": success });
     });
   }
 
   exports.post_unbook = function(req, res) {
 
+    var user = req.session.user;
+
     var post  = req.body;
     var day   = post.day;
     var time  = post.time;
@@ -35,7 +39,7 @@ module.exports = function(settings, db, shedule, booking) {
         "time" : time,
         "bokid": bokid };
 
-    shedule.unbook(room, function() {});
+    shedule.unbook(room, user, function() {});
 
     helper.room.load(room.day, room.time, room.bokid, function(rooms) {
       if (rooms.length == 0)

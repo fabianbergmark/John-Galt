@@ -48,10 +48,16 @@ module.exports = function(settings, db, exists) {
            , afterTime DATETIME NOT NULL )");
         db.run(
           "CREATE TABLE shedule\
-           ( room_id INTEGER NOT NULL REFERENCES room (id) ON DELETE CASCADE\
+           ( id INTEGER PRIMARY KEY\
+           , user_id INTEGER NOT NULL REFERENCES user (id) ON DELETE CASCADE\
            , day VARCHAR(16) NOT NULL\
            , time VARCHAR(16) NOT NULL\
-           , UNIQUE (room_id, day, time) )");
+           , UNIQUE (user_id, day, time) )");
+        db.run(
+          "CREATE TABLE shedule_room\
+           ( shedule_id INTEGER NOT NULL REFERENCES shedule (id) ON DELETE CASCADE\
+           , room_id INTEGER NOT NULL REFERENCES room (id) ON DELETE CASCADE\
+           , UNIQUE (shedule_id, room_id) )");
 
         [{ "name" : "1. Leibnitz",
            "bokid": "Grp01",

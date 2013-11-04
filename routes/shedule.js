@@ -9,10 +9,8 @@ module.exports = function(settings, db, booking) {
   var shedule = [];
 
   function sheduler(event) {
-
     var day   = event.day;
-    var time  = event.time
-    var bokid = event.room.bokid;
+    var time  = event.time;
 
     var at = new Date(day + " " + time);
 
@@ -23,75 +21,127 @@ module.exports = function(settings, db, booking) {
       var wake = new Date(at);
       wake.setDate(wake.getDate() - settings.constants.book.time_limit);
       var sleep = wake.getTime() - Date.now();
-      var thread = setTimeout(function() { sheduler(event); }, sleep);
-      event.thread = thread;
+      event.thread = setTimeout(function() { sheduler(event); }, sleep);
     } else {
-      helper.room.load(day, time, bokid, function(rooms) {
-        if (rooms.length == 0)
-          return;
-        else {
-          var room = rooms[0];
+      helper.room.load(day, time, null, function(rooms) {
+
+        rooms = rooms.filter(function(room) {
+          return event.rooms.some(function(comp) {
+            return room.bokid == comp.bokid;
+          });
+        });
+
+        var sleep = 60 * 1000;
+        var finished = rooms.some(function(room) {
+          var bokid = room.bokid;
           if (room.status == 0) {
-            booking.book(room, function() {});
+            sleep = 10 * 1000;
+            booking.book(room, function() {
+              event.thread = setTimeout(function() { sheduler(event); }, 0);
+            });
+            return true;
           } else if (room.status == 1) {
-            if (room.owner == "John Galt") {
+            if (booking.is_booked(room)) {
               booking.confirm(room, function() { });
+              return true;
             } else {
-              var sleep = 2 * 1000;
-              var thread = setTimeout(function() { sheduler(event); }, sleep);
-              event.thread = thread;
+              sleep = Math.min(sleep, 1 * 1000);
+              return false;
             }
           } else if (room.status == 2) {
             if (at.getTime() < Date.now())
-              return;
-            var sleep =  60 * 1000;
-            if (room.owner == "John Galt") {
+              return false;
+            if (booking.is_booked(room)) {
+              event.rooms = event.rooms.filter(function(comp) {
+                if (comp.bokid == room.bokid)
+                  return true;
+                else {
+                  remove(comp, event.user, function() {});
+                  return false;
+                }
+              });
               var now = new Date();
               var diff = at.getTime() - now.getTime();
 
               var gap = settings.constants.book.confirmation_period;
-
-              sleep = Math.max(diff - gap, 10 * 1000);
+              sleep = Math.min(sleep, Math.max(diff - gap, 10 * 1000));
+              return false;
             }
-            var thread = setTimeout(function() { sheduler(event); }, sleep);
-            event.thread = thread;
           }
-        }
+          return false;
+        });
+
+        if (!finished)
+          event.thread = setTimeout(function() { sheduler(event); }, sleep);
       });
     }
   }
 
-  exports.book = book;
+  function is_sheduled(room) {
+    return shedule.some(function(event) {
+      return (room.day   == event.day &&
+              room.time  == event.time &&
+              event.rooms.some(function(comp) {
+                 return room.bokid == comp.bokid;
+              }));
+    });
+  }
 
-  function book(room, continuation) {
-    var event =
-      { "room": room,
-        "day" : room.day,
-        "time": room.time };
+  function book(room, user, continuation) {
 
-    insert(room, function(result) {
+    insert(room, user, function(result) {
       if (result) {
-        shedule.push(event);
-        sheduler(event);
+        var found = shedule.some(function(event) {
+          if (event.day == room.day &&
+              event.time == room.time) {
+
+            event.rooms.push(room);
+            if (event.thread) {
+              clearTimeout(event.thread);
+              sheduler(event);
+            }
+            return true;
+          }
+          return false;
+        });
+
+        if (!found) {
+          var event =
+            { "rooms": [room],
+              "user" : user,
+              "time" : room.time,
+              "day"  : room.day };
+
+          shedule.push(event);
+          sheduler(event);
+        }
         continuation(true);
       } else
         continuation(false);
     });
   }
 
-  function unbook(room, continuation) {
+  exports.book = book;
+
+  function unbook(room, user, continuation) {
     for (var i = 0; i < shedule.length; ++i) {
       var event = shedule[i];
       if (event.day == room.day &&
-          event.time == room.time &&
-          event.room.bokid == room.bokid) {
-        var index = i;
+          event.time == room.time) {
 
-        if (event.thread)
-          clearTimeout(event.thread);
-        shedule.splice(index, 1);
-        remove(room, function() {});
-        continuation(true);
+        for (var j = 0; j < event.rooms.length; ++j) {
+          if (event.rooms[j].bokid == room.bokid) {
+            event.rooms.splice(j, 1);
+            remove(room, user, function() {});
+            if (event.rooms.length == 0) {
+              if (event.thread)
+                clearTimeout(event.thread);
+              shedule.splice(i, 1);
+            }
+            continuation(true);
+            break;
+          }
+        }
       }
     }
     continuation(false);
@@ -102,12 +152,17 @@ module.exports = function(settings, db, booking) {
   function load(continuation) {
 
     db.all(
-      "SELECT room.bokid\
+      "SELECT GROUP_CONCAT(room.bokid) AS rooms\
             , shedule.day\
             , shedule.time\
+            , shedule.user_id\
          FROM shedule\
+         JOIN shedule_room\
+           ON shedule.id = shedule_room.shedule_id\
          JOIN room\
-           ON shedule.room_id = room.id",
+           ON shedule_room.room_id = room.id\
+     GROUP BY shedule.user_id, shedule.day, shedule.time\
+     ORDER BY shedule.day, shedule.time ASC",
       function(err, rows) {
         if(err)
           continuation([]);
@@ -121,70 +176,109 @@ module.exports = function(settings, db, booking) {
     rows.forEach(
       function(row) {
 
-        var day    = row.day;
-        var time   = row.time;
-        var bokid  = row.bokid;
+        var day     = row.day;
+        var time    = row.time;
+        var rooms   = row.rooms;
+        var user_id = row.user_id;
 
         var event =
-          { "room"  :
-            { "bokid": bokid },
-            "day"   : day,
-            "time"  : time };
+          { "rooms": [],
+            "user" : { "id": user_id },
+            "time" : time,
+            "day"  : day };
+
+        rooms.split(",").forEach(function(bokid) {
+          event.rooms.push(
+            { "bokid": bokid,
+              "time" : time,
+              "day"  : day });
+        });
 
         shedule.push(event);
         sheduler(event);
       });
   });
 
-  function insert(room, continuation) {
+  function insert(room, user, continuation) {
 
     db.run(
-      "INSERT INTO shedule(room_id, day, time)\
-       SELECT room.id\
+      "INSERT OR IGNORE INTO shedule(user_id, day, time)\
+       SELECT user.id\
             , ?\
             , ?\
-         FROM room\
-        WHERE room.bokid = ?",
-      [room.day, room.time, room.bokid],
+         FROM user\
+        WHERE user.id = ?",
+      [room.day, room.time, user.id],
       function(err) {
         if (err)
           continuation(false);
-        else
-          continuation(true);
+        else {
+          db.run(
+            "INSERT INTO shedule_room(shedule_id, room_id)\
+             SELECT shedule.id\
+                  , room.id\
+               FROM shedule\
+                  , room\
+              WHERE shedule.user_id = ?\
+                AND shedule.day = ?\
+                AND shedule.time = ?\
+                AND room.bokid = ?",
+            [user.id, room.day, room.time, room.bokid],
+            function(err) {
+              if (err)
+                continuation(false);
+              else
+                continuation(true);
+            });
+        }
       });
   }
 
-  function remove(room, continuation) {
-    db.run(
-      "DELETE FROM shedule\
-        WHERE room_id IN ( SELECT room.id\
-                             FROM room\
-                            WHERE bokid = ? )\
-         AND day = ?\
-         AND time = ?",
-      [room.bokid, room.day, room.time],
-      function(err) {
-        if (err)
-          continuation(false);
-        else
-          continuation(true);
-      });
+  function remove(room, user, continuation) {
+    if (room.bokid) {
+      db.run(
+        "DELETE FROM shedule_room\
+          WHERE shedule_id IN ( SELECT shedule.id\
+                                  FROM shedule\
+                                 WHERE user_id = ?\
+                                   AND day = ?\
+                                   AND time = ? )\
+            AND room_id IN ( SELECT room.id\
+                               FROM room\
+                              WHERE bokid = ? )",
+        [user.id, room.day, room.time, room.bokid],
+        function(err) {
+          if (err)
+            continuation(false);
+          else
+            continuation(true);
+        });
+    } else {
+      db.run(
+        "DELETE FROM shedule\
+          WHERE user_id = ?\
+            AND day = ?\
+            AND time = ?",
+        [user.id, room.day, room.time],
+        function(err) {
+          if (err)
+            continuation(false);
+          else
+            continuation(true);
+        });
+    }
   }
 
   exports.pipe = function(rooms, continuation) {
     rooms.forEach(function(room) {
-      room.shedule = { "sheduled": false };
-      shedule.forEach(function(event) {
-        if (room.day   == event.day &&
-            room.time  == event.time &&
-            room.bokid == event.room.bokid)
-          room.shedule = { "sheduled": true };
-      });
+      room.shedule = { "sheduled": is_sheduled(room) };
     });
     continuation(rooms);
   }
 
   exports.post_book = function(req, res) {
+
+    var user = req.session.user;
 
     var post  = req.body;
     var day   = post.day;
@@ -196,7 +290,7 @@ module.exports = function(settings, db, booking) {
         "time" : time,
         "bokid": bokid };
 
-    book(room, function(result) {
+    book(room, user,function(result) {
       if (result)
         res.send({ "status": true });
       else
@@ -206,6 +300,8 @@ module.exports = function(settings, db, booking) {
 
   exports.post_unbook = function(req, res) {
 
+    var user = req.session.user;
+
     var post  = req.body;
     var day   = post.day;
     var time  = post.time;
@@ -216,7 +312,7 @@ module.exports = function(settings, db, booking) {
         "time" : time,
         "bokid": bokid };
 
-    unbook(room, function(result) {
+    unbook(room, user, function(result) {
       if (result)
         res.send({ "status": true });
       else
