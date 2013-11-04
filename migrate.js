@@ -49,7 +49,7 @@ module.exports = function(settings, db, exists) {
         db.run(
           "CREATE TABLE shedule\
            ( id INTEGER PRIMARY KEY\
-           , user_id INTEGER NOT NULL REFERENCES user (id) ON DELETE CASCADE\
+           , user_id INTEGER REFERENCES user (id) ON DELETE CASCADE\
            , day VARCHAR(16) NOT NULL\
            , time VARCHAR(16) NOT NULL\
            , UNIQUE (user_id, day, time) )");

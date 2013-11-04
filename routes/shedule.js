@@ -2,7 +2,9 @@
  * Shedule and execute bookings in the future.
  */
 
-var helper = { "room": require('./helpers/kth/room.js') };
+var helper = { "room"    : require('./helpers/kth/room.js'),
+               "date"    : require('./helpers/date/format.js'),
+               "calendar": require('./helpers/ical/calendar.js') };
 
 module.exports = function(settings, db, booking) {
 
@@ -27,17 +29,19 @@ module.exports = function(settings, db, booking) {
 
         rooms = rooms.filter(function(room) {
           return event.rooms.some(function(comp) {
-            return room.bokid == comp.bokid;
+            return comp.bokid == "any" || room.bokid == comp.bokid;
           });
+        }).sort(function(room1, room2) {
+          return room2.status - room1.status;
         });
 
         var sleep = 60 * 1000;
-        var finished = rooms.some(function(room) {
+        var finished = true;
+        rooms.some(function(room) {
           var bokid = room.bokid;
           if (room.status == 0) {
-            sleep = 10 * 1000;
             booking.book(room, function() {
-              event.thread = setTimeout(function() { sheduler(event); }, 0);
+              event.thread = setTimeout(function() { sheduler(event); }, 4000);
             });
             return true;
           } else if (room.status == 1) {
@@ -46,13 +50,18 @@ module.exports = function(settings, db, booking) {
               return true;
             } else {
               sleep = Math.min(sleep, 1 * 1000);
-              return false;
+              finished = false;
             }
           } else if (room.status == 2) {
             if (at.getTime() < Date.now())
               return false;
+            finished = false;
             if (booking.is_booked(room)) {
               event.rooms = event.rooms.filter(function(comp) {
+                if (comp.bokid == "any") {
+                  comp.bokid = room.bokid;
+                  return true;
+                }
                 if (comp.bokid == room.bokid)
                   return true;
                 else {
@@ -60,12 +69,12 @@ module.exports = function(settings, db, booking) {
                   return false;
                 }
               });
-              var now = new Date();
+              var now  = new Date();
               var diff = at.getTime() - now.getTime();
+              var gap  = settings.constants.book.confirmation_period;
+              sleep    = Math.min(sleep, Math.max(diff - gap, 10 * 1000));
 
-              var gap = settings.constants.book.confirmation_period;
-              sleep = Math.min(sleep, Math.max(diff - gap, 10 * 1000));
-              return false;
+              return true;
             }
           }
           return false;
@@ -98,8 +107,8 @@ module.exports = function(settings, db, booking) {
             event.rooms.push(room);
             if (event.thread) {
               clearTimeout(event.thread);
-              sheduler(event);
             }
+            sheduler(event);
             return true;
           }
           return false;
@@ -161,6 +170,7 @@ module.exports = function(settings, db, booking) {
            ON shedule.id = shedule_room.shedule_id\
          JOIN room\
            ON shedule_room.room_id = room.id\
+        WHERE shedule.day >= date('now')\
      GROUP BY shedule.user_id, shedule.day, shedule.time\
      ORDER BY shedule.day, shedule.time ASC",
       function(err, rows) {
@@ -199,7 +209,34 @@ module.exports = function(settings, db, booking) {
       });
   });
 
+  function book_free_periods() {
+
+    var now      = new Date();
+    var ical_url = settings.ical.url;
+
+    helper.calendar.get_free_periods(
+      ical_url, now, 5, function(periods) {
+        periods.forEach(function(period) {
+          var day = period.start.get_date();
+          var time = period.start.get_time();
+
+          var room =
+            { "day"  : day,
+              "time" : time,
+              "bokid": "any" };
+
+          book(room, null, function() {});
+        });
+    });
+
+    setTimeout(book_free_periods, 60 * 60 * 1000);
+  }
+
+  book_free_periods();
+
   function insert(room, user, continuation) {
+
+    var user_id = user ? user.id : "NULL";
 
     db.run(
       "INSERT OR IGNORE INTO shedule(user_id, day, time)\
@@ -208,7 +245,7 @@ module.exports = function(settings, db, booking) {
             , ?\
          FROM user\
         WHERE user.id = ?",
-      [room.day, room.time, user.id],
+      [room.day, room.time, user_id],
       function(err) {
         if (err)
           continuation(false);
@@ -223,7 +260,7 @@ module.exports = function(settings, db, booking) {
                 AND shedule.day = ?\
                 AND shedule.time = ?\
                 AND room.bokid = ?",
-            [user.id, room.day, room.time, room.bokid],
+            [user_id, room.day, room.time, room.bokid],
             function(err) {
               if (err)
                 continuation(false);
@@ -235,6 +272,7 @@ module.exports = function(settings, db, booking) {
   }
 
   function remove(room, user, continuation) {
+    var user_id = user ? user.id : "NULL";
     if (room.bokid) {
       db.run(
         "DELETE FROM shedule_room\
@@ -246,7 +284,7 @@ module.exports = function(settings, db, booking) {
             AND room_id IN ( SELECT room.id\
                                FROM room\
                               WHERE bokid = ? )",
-        [user.id, room.day, room.time, room.bokid],
+        [user_id, room.day, room.time, room.bokid],
         function(err) {
           if (err)
             continuation(false);
@@ -259,7 +297,7 @@ module.exports = function(settings, db, booking) {
           WHERE user_id = ?\
             AND day = ?\
             AND time = ?",
-        [user.id, room.day, room.time],
+        [user_id, room.day, room.time],
         function(err) {
           if (err)
             continuation(false);
