@@ -16,7 +16,8 @@
     "q": "~0.9.7",
     "xpath": "0.0.5",
     "xmldom": "~0.1.16",
-    "jsdom": "~0.8.6"
+    "jsdom": "~0.8.6",
+    "ical": "~0.2.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -27,5 +28,11 @@
     "url": "https://github.com/fabianbergmark/john-galt.git"
   },
   "author": "Fabian Bergmark",
-  "license": "BSD"
+  "license": "BSD",
+  "contributors": [
+    {
+      "name": "Johan Stenberg",
+      "email": "johanstenberg92@gmail.com"
+    }
+  ]
 }
