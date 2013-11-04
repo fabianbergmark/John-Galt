@@ -41,7 +41,7 @@ module.exports = function(settings, db, booking) {
           var bokid = room.bokid;
           if (room.status == 0) {
             booking.book(room, function() {
-              event.thread = setTimeout(function() { sheduler(event); }, 4000);
+              event.thread = setTimeout(function() { sheduler(event); }, 1000);
             });
             return true;
           } else if (room.status == 1) {
@@ -91,7 +91,7 @@ module.exports = function(settings, db, booking) {
       return (room.day   == event.day &&
               room.time  == event.time &&
               event.rooms.some(function(comp) {
-                 return room.bokid == comp.bokid;
+                 return comp.bokid == "any" || room.bokid == comp.bokid;
               }));
     });
   }
@@ -215,7 +215,7 @@ module.exports = function(settings, db, booking) {
     var ical_url = settings.ical.url;
 
     helper.calendar.get_free_periods(
-      ical_url, now, 5, function(periods) {
+      ical_url, now, 7, function(periods) {
         periods.forEach(function(period) {
           var day = period.start.get_date();
           var time = period.start.get_time();

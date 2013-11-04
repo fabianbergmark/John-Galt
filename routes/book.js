@@ -41,9 +41,9 @@ module.exports = function(settings, db, cards) {
   exports.book = book;
 
   function confirm(room, continuation) {
-    var card = room2card(room);
-    if (card)
-      helper.room.confirm(room, card, continuation);
+    var booking = room2booking(room);
+    if (booking)
+      helper.room.confirm(room, booking.card, continuation);
   }
 
   exports.confirm = confirm;
