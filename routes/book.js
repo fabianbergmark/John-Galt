@@ -5,7 +5,7 @@
 var helper = { "room": require('./helpers/kth/room'),
                "booking": require('./helpers/kth/booking') };
 
-module.exports = function(settings, db, cards) {
+module.exports = function(settings, db, cards, names) {
 
   var history = [];
 
@@ -34,7 +34,9 @@ module.exports = function(settings, db, cards) {
         continuation();
       }
 
-      helper.room.book(room, card, confirm);
+      var name = names.generate();
+
+      helper.room.book(room, card, name, confirm);
     }
   }
 
@@ -52,7 +54,6 @@ module.exports = function(settings, db, cards) {
 
     var booking = room2booking(room);
     if (booking) {
-
       helper.room.unbook(room, booking.card, function() {
         helper.room.load(room.day, room.time, room.bokid, function(rooms) {
           if (rooms.length > 0) {
@@ -212,15 +213,14 @@ module.exports = function(settings, db, cards) {
     var loop = function() {
       cards.cards().forEach(function(card) {
         helper.booking.load(card, function(bookings) {
-
           var date = new Date();
-          var today = history.filter(function(booking) {
+          var future = history.filter(function(booking) {
             var at = new Date(booking.room.day);
             return booking.card.number == card.number &&
               at >= date;
           });
 
-          today.forEach(function(booking) {
+          future.forEach(function(booking) {
             var booked = bookings.some(function(room) {
               return (booking.room.day   == room.day  &&
                       booking.room.time  == room.time &&

@@ -21,7 +21,8 @@ var express    = require('express')
   , auth       = require('./routes/auth')(settings, db, authentication)
   , room       = require('./routes/room')(settings, db)
   , card       = require('./routes/card')(settings, db)
-  , book       = require('./routes/book')(settings, db, card)
+  , name       = require('./routes/helpers/name/generator')(settings, db)
+  , book       = require('./routes/book')(settings, db, card, name)
   , shedule    = require('./routes/shedule')(settings, db, book)
   , john_galt  = require('./routes/john-galt')(settings, db, shedule, book)
   , http       = require('http')
@@ -61,6 +62,7 @@ function authenticate(req, res, next) {
     res.send(
       { "status": false,
         "error" : "unauthorized" });
+    req.session.destination = req.url;
     res.redirect('/auth');
   } else
     next();

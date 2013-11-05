@@ -32,7 +32,11 @@ module.exports = function(settings, db, booking) {
             return comp.bokid == "any" || room.bokid == comp.bokid;
           });
         }).sort(function(room1, room2) {
-          return room2.status - room1.status;
+          if (room2.status != room1.status)
+            return room2.status - room1.status;
+          if (room2.bokid < room1.bokid)
+            return 1;
+          return -1;
         });
 
         var sleep = 60 * 1000;

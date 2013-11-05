@@ -60,7 +60,7 @@ function room2bokid(name) {
 
 exports.room2bokid = room2bokid;
 
-exports.book = function(room, card, continuation) {
+exports.book = function(room, card, name, continuation) {
   $.ajax(
     { "type"    : "POST",
       "url"     : "http://www.kth.se/kthb/tjanster/grupprum/gruppschema/bokaupd_po.asp",
@@ -70,7 +70,7 @@ exports.book = function(room, card, continuation) {
                     "bokdag"  : room.day,
                     "period"  : time2period(room.time),
                     "loan"    : card.number,
-                    "anv"     : "John Galt" },
+                    "anv"     : name },
       "success" : function(data) {
         continuation();
       },
@@ -107,7 +107,6 @@ exports.unbook = function(room, card, continuation) {
                     "bokdag"  : room.day,
                     "period"  : time2period(room.time),
                     "loan"    : card.number,
-                    "anv"     : "John Galt",
                     "id"      : room.id,
                     "s"       : "av" },
       "success" : function(data) {

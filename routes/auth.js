@@ -24,7 +24,10 @@ module.exports = function (settings, db, authentication) {
         if (success) {
           res.send(
             { "status": false });
-          res.redirect('/');
+          /*if (req.session.destination)
+            res.redirect(req.session.destination);
+          else*/
+            res.redirect('/');
         } else {
           res.send(
             { "status": false });
